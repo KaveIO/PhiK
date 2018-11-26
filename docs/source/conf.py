@@ -5,7 +5,7 @@
 #
 
 import os
-from unittest.mock import MagicMock
+#from unittest.mock import MagicMock
 
 import phik
 
@@ -15,11 +15,10 @@ import phik
 # in the code and RTD can subsequently go through the code and get 
 # the docstrings.
 
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return MagicMock()
-
+#class Mock(MagicMock):
+#    @classmethod
+#    def __getattr__(cls, name):
+#        return MagicMock()
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
