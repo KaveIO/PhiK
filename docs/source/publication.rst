@@ -5,7 +5,7 @@ Publication & Talks
 Publication
 -----------
 
-* arXiv: http://arxiv.org/abs/1811.1280
+* arXiv: http://arxiv.org/abs/
 
 
 Talks
