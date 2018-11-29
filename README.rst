@@ -5,7 +5,7 @@ Phi_K Correlation Analyzer Library
 * Version: 0.9.0. Released: Nov 2018
 * Documentation: https://phik.readthedocs.io
 * Repository: https://github.com/kaveio/phik
-* Publication: http://arxiv.org/abs/
+* Publication: https://arxiv.org/abs/1811.11440
 
 Phi_K is a new and practical correlation coefficient based on several refinements to Pearson's hypothesis test of independence of two variables.
 

@@ -5,13 +5,13 @@ Publication & Talks
 Publication
 -----------
 
-* arXiv: http://arxiv.org/abs/
+* arXiv: https://arxiv.org/abs/1811.11440
 
 
 Talks
 -----
 
-* Still empty so far.
+* Coming soon.
 
 
 References
