@@ -318,7 +318,7 @@ def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="l
         raise TypeError('bins is of incorrect type.')    
 
     if isinstance( interval_cols, type(None) ):
-        interval_cols = df.select_dtypes('number').columns.tolist()
+        interval_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         if interval_cols:
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance(interval_cols, list), 'interval_cols is not a list.'

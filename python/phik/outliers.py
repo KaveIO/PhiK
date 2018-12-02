@@ -475,7 +475,7 @@ def outlier_significance_matrix(df:pd.DataFrame, interval_cols:list=None, CI_met
     assert len(df.columns) == 2, 'df should contain only two columns'
 
     if isinstance( interval_cols, type(None) ):
-        interval_cols = df.select_dtypes('number').columns.tolist()
+        interval_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         if interval_cols:
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
@@ -566,7 +566,7 @@ def outlier_significance_matrices(df:pd.DataFrame, interval_cols:list=None, CI_m
         raise TypeError('df is not a pandas DataFrame.')
 
     if isinstance(interval_cols, type(None)):
-        interval_cols = df.select_dtypes('number').columns.tolist()
+        interval_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         if interval_cols:
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance(interval_cols, list), 'interval_cols is not a list.'
@@ -614,7 +614,7 @@ def outlier_significance_from_array(x, y, num_vars:list=None, bins=10, quantile:
     df = pd.DataFrame(np.array([x, y]).T, columns=['x', 'y'])
 
     if isinstance( num_vars, type(None) ):
-        num_vars = df.select_dtypes('number').columns.tolist()
+        num_vars = df.select_dtypes(include=[np.number]).columns.tolist()
         if num_vars:
             print('num_vars not set, guessing: {0:s}'.format(str(num_vars)))
     assert isinstance( num_vars, list ), 'num_vars is not a list.'

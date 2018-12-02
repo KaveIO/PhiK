@@ -34,7 +34,3 @@ DataFrame.significance_matrix = significance_matrix
 from phik.outliers import outlier_significance_matrices, outlier_significance_matrix
 DataFrame.outlier_significance_matrices = outlier_significance_matrices
 DataFrame.outlier_significance_matrix = outlier_significance_matrix
-
-# correlation report
-from phik.report import correlation_report
-DataFrame.correlation_report = correlation_report

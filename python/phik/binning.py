@@ -216,7 +216,7 @@ def hist2d(df, interval_cols=None, bins=10, quantile:bool=False, dropna:bool=Tru
     assert len(df.columns) == 2, 'DataFrame should contain only two columns'
 
     if isinstance( interval_cols, type(None) ):
-        interval_cols = df.select_dtypes('number').columns.tolist()
+        interval_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         if interval_cols:
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
