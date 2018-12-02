@@ -76,7 +76,7 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
 
 
 # --- jit turned off for now, somehow not working for patefield; computer dependent!
-#@jit(cache=True, forceobj=True)
+#@jit(forceobj=True)
 def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
     """
     Simulate a two dimensional dataset with fixed row and column totals.
@@ -272,7 +272,7 @@ def sim_2d_product_multinominal(data:np.ndarray, axis:str) -> np.ndarray:
         raise ValueError
 
 
-@jit(cache=True, forceobj=True)
+@jit(forceobj=True)
 def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
     """
     Simulate a 2 dimenstional dataset given a 2 dimensional pdf
