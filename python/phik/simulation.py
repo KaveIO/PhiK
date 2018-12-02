@@ -21,7 +21,7 @@ from numba import jit
 from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
 
-@jit
+@jit(forceobj=True)
 def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     """
     Simulate a 2 dimensional dataset given a 2 dimensional pdf
@@ -76,7 +76,7 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
 
 
 # --- jit turned off for now, somehow not working for patefield; computer dependent!
-#@jit
+#@jit(cache=True, forceobj=True)
 def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
     """
     Simulate a two dimensional dataset with fixed row and column totals.
@@ -272,7 +272,7 @@ def sim_2d_product_multinominal(data:np.ndarray, axis:str) -> np.ndarray:
         raise ValueError
 
 
-@jit
+@jit(cache=True, forceobj=True)
 def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
     """
     Simulate a 2 dimenstional dataset given a 2 dimensional pdf
@@ -306,7 +306,7 @@ def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
         raise ValueError
 
 
-@jit
+@jit(forceobj=True)
 def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal') -> list:
     """
     Simulate 2D data and calculate the chi-square statistic for each simulated dataset.
