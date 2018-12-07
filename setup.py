@@ -20,8 +20,10 @@ NAME = 'phik'
 
 MAJOR = 0
 REVISION = 9
-PATCH = 2
+PATCH = 3
 DEV = False
+
+# note: also update README.rst
 
 VERSION = '{major}.{revision}.{patch}'.format(major=MAJOR, revision=REVISION, patch=PATCH)
 FULL_VERSION = VERSION
