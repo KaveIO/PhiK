@@ -20,7 +20,7 @@ NAME = 'phik'
 
 MAJOR = 0
 REVISION = 9
-PATCH = 3
+PATCH = 4
 DEV = False
 
 # note: also update README.rst
