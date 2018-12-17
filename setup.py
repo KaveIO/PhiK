@@ -20,7 +20,7 @@ NAME = 'phik'
 
 MAJOR = 0
 REVISION = 9
-PATCH = 4
+PATCH = 5
 DEV = False
 
 # note: also update README.rst
@@ -30,16 +30,16 @@ FULL_VERSION = VERSION
 if DEV:
     FULL_VERSION += '.dev'
 
-TEST_REQUIREMENTS = ['pytest>=3.5.0',
-                     'pytest-pylint>=0.9.0',
+TEST_REQUIREMENTS = ['pytest>=4.0.2',
+                     'pytest-pylint>=0.13.0',
                      ]
 
 REQUIREMENTS = [
-    'numpy>=1.15.0',
-    'scipy>=0.19.0',
-    'pandas>=0.21.1',
-    'matplotlib>=2.0.2',
-    'numba>=0.24.0'
+    'numpy>=1.15.4',
+    'scipy>=1.1.0',
+    'pandas>=0.23.4',
+    'matplotlib>=3.0.2',
+    'numba>=0.41.0'
     ]
 
 REQUIREMENTS = REQUIREMENTS + TEST_REQUIREMENTS
