@@ -14,6 +14,7 @@ LICENSE.
 """
 from typing import Union
 
+import os
 import itertools
 import numpy as np
 import pandas as pd
@@ -216,10 +217,10 @@ def plot_correlation_matrix(matrix_colors:np.ndarray, x_labels:list, y_labels:li
 
 def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quantile:bool=False, do_outliers:bool=True, pdf_file_name:str='',
                        significance_threshold:float=3, correlation_threshold:float=0.5,
-                       noise_correction:bool=True,
+                       noise_correction:bool=True, store_each_plot:bool=False,
                        lambda_significance:str="log-likelihood",
                        simulation_method:str='multinominal', nsim_chi2:int=1000,
-                       significance_method:str='asymptotic', CI_method:str='poisson') -> Union[pd.DataFrame, pd.DataFrame, dict]:
+                       significance_method:str='asymptotic', CI_method:str='poisson') -> Union[pd.DataFrame, pd.DataFrame, dict, dict]:
     """
     Create a correlation report for the given dataset.
 
@@ -236,6 +237,7 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
     :param quantile: when bins is an integer, uniform bins (False) or bins based on quantiles (True)
     :param do_outliers: Evaluate outlier significances of variable pairs (when True)
     :param pdf_file_name: file name of the pdf where the results are stored
+    :param store_each_plot: store each plot in folder derived from pdf_file_name. If true, single pdf is no longer stored. Default is false.
     :param significance_threshold: evaluate outlier significance for all variable pairs with a significance of \
      uncorrelation higher than this threshold
     :param correlation_threshold: evaluate outlier significance for all variable pairs with a phik correlation \
@@ -248,7 +250,8 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
     :param significance_method: method for significance calculation. Options: [asymptotic, MC, hybrid]
     :param CI_method: method for uncertainty calculation for outlier significance calculation. Options: [poisson, \
     exact_poisson]
-    :return: phik_overview (pd.DataFrame), significance_overview (pd.DataFrame), outliers_overview (dictionary)
+    :returns: phik_matrix (pd.DataFrame), global_phik (np.array), significance_matrix (pd.DataFrame), \
+    outliers_overview (dictionary), output_files (dictionary)
     """
     if not isinstance(data, pd.DataFrame):
         raise TypeError('df is not a pandas DataFrame.')
@@ -259,37 +262,54 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
 
-    # create pdf to save plots
+    # create pdf(s) to save plots
+    output_files = dict()
+    plot_file_name = ''
+    if store_each_plot:
+        folder = os.path.dirname(pdf_file_name)
+        folder += '/' if folder else './'
+        # if each plot is stored, single overview file is no longer stored.
+        # (b/c of problem with multiple PdfPages)
+        pdf_file_name = ''
     if pdf_file_name:
         pdf_file = PdfPages(pdf_file_name)
 
     data_binned, binning_dict = bin_data(data, interval_cols, bins=bins, quantile=quantile, retbins=True)
 
     ### 1. Phik
-    phik_overview = phik_from_rebinned_df( data_binned, noise_correction )
-    plot_correlation_matrix(phik_overview.values, x_labels=phik_overview.columns, y_labels=phik_overview.index,
-                                 vmin=0, vmax=1, color_map='Blues', title=r'correlation $\phi_K$', fontsize_factor=1.5,
-                                 figsize=(7, 5.5))
+    if store_each_plot:
+        plot_file_name = folder + 'phik_matrix.pdf'
+        output_files['phik_matrix'] = plot_file_name
+    phik_matrix = phik_from_rebinned_df( data_binned, noise_correction )
+    plot_correlation_matrix(phik_matrix.values, x_labels=phik_matrix.columns, y_labels=phik_matrix.index,
+                            vmin=0, vmax=1, color_map='Blues', title=r'correlation $\phi_K$', fontsize_factor=1.5,
+                            figsize=(7, 5.5), pdf_file_name=plot_file_name)
     if pdf_file_name:
         plt.savefig(pdf_file, format='pdf', bbox_inches='tight', pad_inches=0)
         plt.show()
 
     ### 1b. global correlations
-    global_correlations, global_labels = global_phik_from_rebinned_df(data_binned, noise_correction)
-    plot_correlation_matrix(global_correlations, x_labels=[''], y_labels=global_labels,
+    if store_each_plot:
+        plot_file_name = folder + 'global_phik.pdf'
+        output_files['global_phik'] = plot_file_name
+    global_phik, global_labels = global_phik_from_rebinned_df(data_binned, noise_correction)
+    plot_correlation_matrix(global_phik, x_labels=[''], y_labels=global_labels,
                             vmin=0, vmax=1, figsize=(3.5,4),
                             color_map='Blues', title=r'$g_k$',
-                            fontsize_factor=1.5)
+                            fontsize_factor=1.5, pdf_file_name=plot_file_name)
     #plt.tight_layout()
     if pdf_file_name:
         plt.savefig(pdf_file, format='pdf', bbox_inches='tight', pad_inches=0)
         plt.show()
 
     ### 2. Significance
-    significance_overview = significance_from_rebinned_df( data_binned, lambda_significance, simulation_method, nsim_chi2, significance_method )
-    plot_correlation_matrix(significance_overview.fillna(0).values, x_labels=significance_overview.columns,
-                                 y_labels=significance_overview.index, vmin=-5, vmax=5, title='significance',
-                                 usetex=False, fontsize_factor=1.5, figsize=(7, 5.5))
+    if store_each_plot:
+        plot_file_name = folder + 'significance_matrix.pdf'
+        output_files['significance_matrix'] = plot_file_name
+    significance_matrix = significance_from_rebinned_df( data_binned, lambda_significance, simulation_method, nsim_chi2, significance_method )
+    plot_correlation_matrix(significance_matrix.fillna(0).values, x_labels=significance_matrix.columns,
+                            y_labels=significance_matrix.index, vmin=-5, vmax=5, title='significance',
+                            usetex=False, fontsize_factor=1.5, figsize=(7, 5.5), pdf_file_name=plot_file_name)
     if pdf_file_name:
         plt.savefig(pdf_file, format='pdf', bbox_inches='tight', pad_inches=0)
         plt.show()
@@ -299,23 +319,29 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
     if do_outliers:
         for i, comb in enumerate(itertools.combinations(data_binned.columns, 2)):
             c0, c1 = comb
-            if abs(significance_overview.loc[c0, c1]) < significance_threshold or \
-                    phik_overview.loc[c0, c1] < correlation_threshold:
+            if abs(significance_matrix.loc[c0, c1]) < significance_threshold or \
+               phik_matrix.loc[c0, c1] < correlation_threshold:
                 continue
 
             zvalues_df = outlier_significance_matrix_from_rebinned_df(data_binned[[c0, c1]], binning_dict, CI_method=CI_method)
 
+            combi = ':'.join(comb).replace(' ','_')
             xlabels = zvalues_df.columns
             ylabels = zvalues_df.index
             xlabel = zvalues_df.columns.name
             ylabel = zvalues_df.index.name
 
+            if store_each_plot:
+                plot_file_name = folder + 'pulls_{0:s}.pdf'.format(combi)
+                output_files[combi] = plot_file_name
+
             plot_correlation_matrix(zvalues_df.values, x_labels=xlabels, y_labels=ylabels,
                                     x_label=xlabel, y_label=ylabel,
                                     vmin=-5, vmax=5, title='outlier significance',
-                                    identity_layout=False, fontsize_factor=1.2)
+                                    identity_layout=False, fontsize_factor=1.2,
+                                    pdf_file_name=plot_file_name)
 
-            outliers_overview[':'.join(comb)] = zvalues_df
+            outliers_overview[combi] = zvalues_df
 
             if pdf_file_name:
                 plt.savefig(pdf_file, format='pdf', bbox_inches='tight', pad_inches=0)
@@ -323,7 +349,8 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
 
     # save plots
     if pdf_file_name:
+        output_files['all'] = pdf_file_name
         plt.close()
         pdf_file.close()
 
-    return phik_overview, significance_overview, outliers_overview
+    return phik_matrix, global_phik, significance_matrix, outliers_overview, output_files
