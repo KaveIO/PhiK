@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 import math
 import itertools
+import warnings
 
 from scipy import stats
 from scipy import special, optimize
@@ -277,6 +278,12 @@ def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-lik
     for i, comb in enumerate(itertools.combinations_with_replacement(data_binned.columns.values, 2)):
         c0, c1 = comb
         datahist = data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
+        if 1 in datahist.shape or 0 in datahist.shape:
+            signifs[':'.join(comb)] = np.nan
+            warnings.warn('Too few unique values for variable {0:s} ({1:d}) or {2:s} ({3:d}) to calculate significance'
+                .format(c0, datahist.shape[0], c1, datahist.shape[1]))
+            continue
+
         datahist.columns = datahist.columns.droplevel()
         datahist = datahist.values
         pvalue, zvalue = significance_from_hist2d(datahist, nsim=nsim, lambda_=lambda_,
@@ -322,6 +329,12 @@ def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="l
         if interval_cols:
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance(interval_cols, list), 'interval_cols is not a list.'
+
+    for col in sorted(list(set(df.columns)-set(interval_cols))):
+        if df[col].nunique() > 100:
+            warnings.warn('The number of unique values of variable {0:s} is very large: {1:d}. Are you sure this is '
+                          'not an interval variable? Calculating the significance for pairs of variables including '
+                          '{0:s} might become slow.'.format(col, df[col].nunique()))
 
     data_binned = bin_data(df, interval_cols, bins=bins)
     return significance_from_rebinned_df(data_binned, lambda_=lambda_, simulation_method=simulation_method, nsim=nsim,

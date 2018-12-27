@@ -17,6 +17,7 @@ from typing import Tuple, Union
 import itertools
 import numpy as np
 import pandas as pd
+import warnings
 
 from scipy import stats
 from scipy.special import betainc
@@ -426,19 +427,36 @@ def outlier_significance_matrix_from_rebinned_df(data_binned:pd.DataFrame, binni
     df_datahist = data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
     df_datahist.columns = df_datahist.columns.droplevel()
 
+    if 1 in df_datahist.shape or 0 in df_datahist.shape:
+        warnings.warn('Too few unique values for variable {0:s} ({1:d}) or {2:s} ({3:d}) to calculate outlier '
+                      'significances'
+                      .format(c0, df_datahist.shape[0], c1, df_datahist.shape[1]))
+        return np.nan
+
     if c0 in binning_dict.keys():
-        #index_vals = ['{1:.{0}f}_{2:.{0}f}'.format(ndecimals, binning_dict[c0][i], binning_dict[c0][i+1])
-        #              for i in range(len(binning_dict[c0])-1)]
+
+        # check for missing bins. This can occur due to NaN values for variable c1 in which case rows are dropped
+        missing = list(set(data_binned[c0].value_counts().sort_index().index) - set(df_datahist.index))
+        imissing = []
+        for v in missing:
+            imissing.append(np.where(data_binned[c0].value_counts().sort_index().index == v)[0][0])
+
         index_vals = ['{1:.{0}f}_{2:.{0}f}'.format(ndecimals, binning_dict[c0][i][0], binning_dict[c0][i][1])
-                      for i in range(len(binning_dict[c0]))]
+                      for i in range(len(binning_dict[c0])) if not i in imissing]
         index_vals = index_vals + list(df_datahist.index[len(index_vals):])  # to deal with UF and OF
         df_datahist.index = index_vals
 
+
     if c1 in binning_dict.keys():
-        #col_vals = ['{1:.{0}f}_{2:.{0}f}'.format(ndecimals, binning_dict[c1][i], binning_dict[c1][i+1])
-        #            for i in range(len(binning_dict[c1])-1)]
+
+        # check for missing bins. This can occur due to NaN values for variable c0 in which case rows are dropped
+        missing = list(set(data_binned[c1].value_counts().sort_index().index) - set(df_datahist.columns))
+        imissing = []
+        for v in missing:
+            imissing.append(np.where(data_binned[c1].value_counts().sort_index().index == v)[0][0])
+
         col_vals = ['{1:.{0}f}_{2:.{0}f}'.format(ndecimals, binning_dict[c1][i][0], binning_dict[c1][i][1])
-                    for i in range(len(binning_dict[c1]))]
+                    for i in range(len(binning_dict[c1])) if not i in imissing]
         col_vals = col_vals + list(df_datahist.columns[len(col_vals):])  # to deal with UF and OF
         df_datahist.columns = col_vals
 
@@ -479,6 +497,11 @@ def outlier_significance_matrix(df:pd.DataFrame, interval_cols:list=None, CI_met
         if interval_cols:
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
+
+    for col in sorted(list(set(df.columns)-set(interval_cols))):
+        if df[col].nunique() > 100:
+            warnings.warn('The number of unique values of variable {0:s} is very large: {1:d}. Are you sure this is '
+                          'not an interval variable?'.format(col, df[col].nunique()))
 
     data_binned, binning_dict = bin_data(df, interval_cols, retbins=True, bins=bins, quantile=quantile)
 
@@ -570,6 +593,11 @@ def outlier_significance_matrices(df:pd.DataFrame, interval_cols:list=None, CI_m
         if interval_cols:
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance(interval_cols, list), 'interval_cols is not a list.'
+
+    for col in sorted(list(set(df.columns)-set(interval_cols))):
+        if df[col].nunique() > 100:
+            warnings.warn('The number of unique values of variable {0:s} is very large: {1:d}. Are you sure this is '
+                          'not an interval variable?'.format(col, df[col].nunique()))
 
     data_binned, binning_dict = bin_data(df, interval_cols, retbins=True, bins=bins, quantile=quantile)
 

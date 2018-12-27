@@ -148,6 +148,12 @@ def phik_matrix(df:pd.DataFrame, interval_cols:list=None, bins=10, quantile:bool
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
 
+    for col in sorted(list(set(df.columns)-set(interval_cols))):
+        if df[col].nunique() > 100:
+            warnings.warn('The number of unique values of variable {0:s} is very large: {1:d}. Are you sure this is '
+                          'not an interval variable? Calculating the phik correlation for pairs of variables including '
+                          '{0:s} might be slow.'.format(col, df[col].nunique()))
+
     data_binned, binning_dict = bin_data(df, cols=interval_cols, bins=bins, quantile=quantile, retbins=True)
     return phik_from_rebinned_df(data_binned, noise_correction, dropna=dropna, drop_underflow=drop_underflow,
                                  drop_overflow=drop_overflow)
