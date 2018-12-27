@@ -16,6 +16,7 @@ LICENSE.
 import numpy as np
 import itertools
 import pandas as pd
+import warnings
 
 from phik import definitions as defs
 from .bivariate import phik_from_chi2
@@ -87,6 +88,7 @@ def phik_from_rebinned_df(data_binned:pd.DataFrame, noise_correction:bool=True, 
     if drop_overflow:
         data_binned = data_binned.replace(defs.OF, np.nan).copy()
 
+
     phiks = {}
     for i, comb in enumerate(itertools.combinations_with_replacement(data_binned.columns.values, 2)):
         c0, c1 = comb
@@ -94,6 +96,15 @@ def phik_from_rebinned_df(data_binned:pd.DataFrame, noise_correction:bool=True, 
             phiks[':'.join(comb)] = 1
             continue
         datahist = data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
+
+        # If 0 or only 1 values for one of the two variables, it is not possible to calculate phik.
+        # This check needs to be done after creation of OF, UF and NaN bins.
+        if 1 in datahist.shape or 0 in datahist.shape:
+            phiks[':'.join(comb)] = np.nan
+            warnings.warn('Too few unique values for variable {0:s} ({1:d}) or {2:s} ({3:d}) to calculate phik'.format(
+                c0, datahist.shape[0], c1, datahist.shape[1]))
+            continue
+
         datahist.columns = datahist.columns.droplevel()
         phikvalue = phik_from_hist2d(datahist.values, noise_correction=noise_correction)
         phiks[':'.join(comb)] = phikvalue

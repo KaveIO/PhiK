@@ -37,7 +37,7 @@ def bin_edges(arr, nbins:int, quantile:bool = False) -> np.ndarray:
         xbins = np.quantile(arr[~np.isnan(arr)], quantiles)
         xbins[0] = xbins[0] - 1E-14
     else:
-        xbins = np.linspace(min(arr) - 1E-14, max(arr), nbins + 1)
+        xbins = np.linspace(min(arr[~np.isnan(arr)]) - 1E-14, max(arr[~np.isnan(arr)]), nbins + 1)
 
     return xbins
 

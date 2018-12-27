@@ -19,6 +19,8 @@ import numpy as np
 from scipy.stats import mvn
 from scipy import optimize
 
+import warnings
+
 
 def _mvn_un(rho: float, lower: tuple, upper: tuple) -> float:
     '''Perform integral of bivariate normal gauss with correlation
@@ -115,6 +117,8 @@ def phik_from_chi2(chi2:float, n:int, nx:int, ny:int, sx:np.ndarray=None, sy:np.
     :param float pedestal: pedestal is added to the chi2 if set.
     :returns float: correlation coefficient
     '''
+
+
     assert nx>1 or sx is not None, 'number of bins along x-axis is unknown'
     assert ny>1 or sy is not None, 'number of bins along y-axis is unknown'
     assert pedestal>=0, 'noise pedestal should be greater than zero.'
@@ -126,9 +130,15 @@ def phik_from_chi2(chi2:float, n:int, nx:int, ny:int, sx:np.ndarray=None, sy:np.
 
     # scale ensures that for rho=1, chi2 is the maximum possible value
     corr1 = _mvn_array(1, sx, sy)
+    if 0 in corr0 and len(corr0)>10000:
+        warnings.warn('Too many unique values. Are you sure that interval variables are set correctly?')
+        return np.nan
+
     chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 for c0,c1 in zip(corr0,corr1)])
     chi2_max = n * min(nx-1, ny-1)
     scale = (chi2_max - pedestal) / chi2_one
+    if chi2_max < chi2 and np.isclose(chi2, chi2_max, atol=1E-14):
+        chi2 = chi2_max
 
     # only solve for rho if chi2 exceeds noise pedestal
     if chi2 <= pedestal:
