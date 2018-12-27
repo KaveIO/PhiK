@@ -436,10 +436,11 @@ def outlier_significance_matrix_from_rebinned_df(data_binned:pd.DataFrame, binni
     if c0 in binning_dict.keys():
 
         # check for missing bins. This can occur due to NaN values for variable c1 in which case rows are dropped
-        missing = list(set(data_binned[c0].value_counts().sort_index().index) - set(df_datahist.index))
+        orig_vals = data_binned[~data_binned[c0].isin(['OF', 'UF', 'NaN'])][c0].value_counts().sort_index().index
+        missing = list(set(orig_vals) - set(df_datahist.index))
         imissing = []
         for v in missing:
-            imissing.append(np.where(data_binned[c0].value_counts().sort_index().index == v)[0][0])
+            imissing.append(np.where(orig_vals == v)[0][0])
 
         index_vals = ['{1:.{0}f}_{2:.{0}f}'.format(ndecimals, binning_dict[c0][i][0], binning_dict[c0][i][1])
                       for i in range(len(binning_dict[c0])) if not i in imissing]
@@ -450,10 +451,11 @@ def outlier_significance_matrix_from_rebinned_df(data_binned:pd.DataFrame, binni
     if c1 in binning_dict.keys():
 
         # check for missing bins. This can occur due to NaN values for variable c0 in which case rows are dropped
-        missing = list(set(data_binned[c1].value_counts().sort_index().index) - set(df_datahist.columns))
+        orig_vals = data_binned[~data_binned[c0].isin(['OF', 'UF', 'NaN'])][c1].value_counts().sort_index().index
+        missing = list(set(orig_vals) - set(df_datahist.columns))
         imissing = []
         for v in missing:
-            imissing.append(np.where(data_binned[c1].value_counts().sort_index().index == v)[0][0])
+            imissing.append(np.where(orig_vals == v)[0][0])
 
         col_vals = ['{1:.{0}f}_{2:.{0}f}'.format(ndecimals, binning_dict[c1][i][0], binning_dict[c1][i][1])
                     for i in range(len(binning_dict[c1])) if not i in imissing]
