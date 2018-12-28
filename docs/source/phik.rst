@@ -35,6 +35,14 @@ phik.bivariate module
     :undoc-members:
     :show-inheritance:
 
+phik.data\_quality module
+-------------------------
+
+.. automodule:: phik.data_quality
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 phik.definitions module
 -----------------------
 

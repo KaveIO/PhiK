@@ -29,7 +29,7 @@ from .binning import bin_data, create_correlation_overview_table
 from .statistics import get_chi2_using_dependent_frequency_estimates
 from .statistics import estimate_ndof, estimate_simple_ndof, theoretical_ndof
 from .simulation import sim_chi2_distribution
-
+from .data_quality import dq_check_nunique_values
 
 def fit_test_statistic_distribution(chi2s:list, nbins:int=50) -> Union[float,float,float,float]:
     """
@@ -330,11 +330,7 @@ def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="l
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance(interval_cols, list), 'interval_cols is not a list.'
 
-    for col in sorted(list(set(df.columns)-set(interval_cols))):
-        if df[col].nunique() > 100:
-            warnings.warn('The number of unique values of variable {0:s} is very large: {1:d}. Are you sure this is '
-                          'not an interval variable? Calculating the significance for pairs of variables including '
-                          '{0:s} might become slow.'.format(col, df[col].nunique()))
+    df, interval_cols = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
     data_binned = bin_data(df, interval_cols, bins=bins)
     return significance_from_rebinned_df(data_binned, lambda_=lambda_, simulation_method=simulation_method, nsim=nsim,

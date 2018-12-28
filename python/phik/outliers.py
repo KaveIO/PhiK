@@ -26,7 +26,7 @@ from phik import definitions as defs
 from .binning import bin_data
 from .betainc import log_incompbeta
 from .statistics import z_from_logp
-
+from .data_quality import dq_check_nunique_values
 
 def poisson_obs_p(nobs:int, nexp:float, nexperr:float) -> float:
     """
@@ -436,7 +436,7 @@ def outlier_significance_matrix_from_rebinned_df(data_binned:pd.DataFrame, binni
     if c0 in binning_dict.keys():
 
         # check for missing bins. This can occur due to NaN values for variable c1 in which case rows are dropped
-        orig_vals = data_binned[~data_binned[c0].isin(['OF', 'UF', 'NaN'])][c0].value_counts().sort_index().index
+        orig_vals = data_binned[~data_binned[c0].isin([defs.UF, defs.OF, defs.NaN])][c0].value_counts().sort_index().index
         missing = list(set(orig_vals) - set(df_datahist.index))
         imissing = []
         for v in missing:
@@ -451,7 +451,7 @@ def outlier_significance_matrix_from_rebinned_df(data_binned:pd.DataFrame, binni
     if c1 in binning_dict.keys():
 
         # check for missing bins. This can occur due to NaN values for variable c0 in which case rows are dropped
-        orig_vals = data_binned[~data_binned[c0].isin(['OF', 'UF', 'NaN'])][c1].value_counts().sort_index().index
+        orig_vals = data_binned[~data_binned[c1].isin([defs.UF, defs.OF, defs.NaN])][c1].value_counts().sort_index().index
         missing = list(set(orig_vals) - set(df_datahist.columns))
         imissing = []
         for v in missing:
@@ -500,10 +500,7 @@ def outlier_significance_matrix(df:pd.DataFrame, interval_cols:list=None, CI_met
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
 
-    for col in sorted(list(set(df.columns)-set(interval_cols))):
-        if df[col].nunique() > 100:
-            warnings.warn('The number of unique values of variable {0:s} is very large: {1:d}. Are you sure this is '
-                          'not an interval variable?'.format(col, df[col].nunique()))
+    df, interval_cols = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
     data_binned, binning_dict = bin_data(df, interval_cols, retbins=True, bins=bins, quantile=quantile)
 
@@ -596,10 +593,7 @@ def outlier_significance_matrices(df:pd.DataFrame, interval_cols:list=None, CI_m
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance(interval_cols, list), 'interval_cols is not a list.'
 
-    for col in sorted(list(set(df.columns)-set(interval_cols))):
-        if df[col].nunique() > 100:
-            warnings.warn('The number of unique values of variable {0:s} is very large: {1:d}. Are you sure this is '
-                          'not an interval variable?'.format(col, df[col].nunique()))
+    df, interval_cols = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
     data_binned, binning_dict = bin_data(df, interval_cols, retbins=True, bins=bins, quantile=quantile)
 
