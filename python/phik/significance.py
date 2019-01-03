@@ -29,7 +29,7 @@ from .binning import bin_data, create_correlation_overview_table
 from .statistics import get_chi2_using_dependent_frequency_estimates
 from .statistics import estimate_ndof, estimate_simple_ndof, theoretical_ndof
 from .simulation import sim_chi2_distribution
-from .data_quality import dq_check_nunique_values
+from .data_quality import dq_check_nunique_values, dq_check_hist2d
 
 def fit_test_statistic_distribution(chi2s:list, nbins:int=50) -> Union[float,float,float,float]:
     """
@@ -330,9 +330,9 @@ def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="l
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance(interval_cols, list), 'interval_cols is not a list.'
 
-    df, interval_cols = dq_check_nunique_values(df, interval_cols, dropna=dropna)
+    df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
-    data_binned = bin_data(df, interval_cols, bins=bins)
+    data_binned = bin_data(df_clean, interval_cols_clean, bins=bins)
     return significance_from_rebinned_df(data_binned, lambda_=lambda_, simulation_method=simulation_method, nsim=nsim,
                                          significance_method=significance_method, dropna=dropna,
                                          drop_underflow=drop_underflow, drop_overflow=drop_overflow)
@@ -363,7 +363,7 @@ def significance_from_array(x, y, num_vars:list=[], bins=10, quantile:bool=False
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
-    :return: significance
+    :return: p-value, significance
     """
     if not isinstance(x, (np.ndarray, pd.Series)):
         raise TypeError('x is not array like.')
@@ -427,6 +427,9 @@ def significance_from_binned_array(x, y, lambda_:str="log-likelihood", significa
         y[np.where(y == defs.OF)] = np.nan
 
     hist2d = pd.crosstab(x, y).values
+
+    if not dq_check_hist2d(hist2d):
+        return np.nan, np.nan
 
     return significance_from_hist2d(hist2d, lambda_=lambda_, significance_method=significance_method,
                                     simulation_method=simulation_method, nsim=nsim)

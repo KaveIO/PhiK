@@ -3,7 +3,7 @@
 Created: 2018/09/05
 
 Description:
-    TODO
+    Functions for the Phik correlation calculation
 
 Authors:
     KPMG Advanced Analytics & Big Data team, Amstelveen, The Netherlands
@@ -22,7 +22,7 @@ from phik import definitions as defs
 from .bivariate import phik_from_chi2
 from .statistics import get_chi2_using_dependent_frequency_estimates, estimate_simple_ndof
 from .binning import create_correlation_overview_table, bin_data
-from .data_quality import dq_check_nunique_values
+from .data_quality import dq_check_nunique_values, dq_check_hist2d
 
 
 def phik_from_hist2d(observed:np.ndarray, noise_correction:bool=True) -> float:
@@ -149,9 +149,9 @@ def phik_matrix(df:pd.DataFrame, interval_cols:list=None, bins=10, quantile:bool
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
 
-    df, interval_cols = dq_check_nunique_values(df, interval_cols, dropna=dropna)
+    df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
-    data_binned, binning_dict = bin_data(df, cols=interval_cols, bins=bins, quantile=quantile, retbins=True)
+    data_binned, binning_dict = bin_data(df_clean, cols=interval_cols_clean, bins=bins, quantile=quantile, retbins=True)
     return phik_from_rebinned_df(data_binned, noise_correction, dropna=dropna, drop_underflow=drop_underflow,
                                  drop_overflow=drop_overflow)
 
@@ -223,7 +223,9 @@ def global_phik_array(df:pd.DataFrame, interval_cols:list=None, bins=10, quantil
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
 
-    data_binned, binning_dict = bin_data(df, cols=interval_cols, bins=bins, quantile=quantile, retbins=True)
+    df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
+
+    data_binned, binning_dict = bin_data(df_clean, cols=interval_cols_clean, bins=bins, quantile=quantile, retbins=True)
     return global_phik_from_rebinned_df(data_binned, noise_correction=noise_correction, dropna=dropna, \
                                         drop_underflow=drop_underflow, drop_overflow=drop_overflow)
 
@@ -311,5 +313,8 @@ def phik_from_binned_array(x, y, noise_correction:bool=True, dropna:bool=True, d
         y[np.where(y == defs.OF)] = np.nan
 
     hist2d = pd.crosstab(x, y).values
+
+    if not dq_check_hist2d(hist2d):
+        return np.nan
 
     return phik_from_hist2d(hist2d, noise_correction=noise_correction)

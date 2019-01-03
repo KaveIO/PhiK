@@ -27,6 +27,7 @@ from .binning import bin_data
 from .phik import phik_from_rebinned_df, global_phik_from_rebinned_df
 from .significance import significance_from_rebinned_df
 from .outliers import outlier_significance_matrix_from_rebinned_df
+from .data_quality import dq_check_nunique_values
 
 
 def plot_hist_and_func(data, func, funcparams, xbins=False, labels=['',''], xlabel='', ylabel='', title='',
@@ -262,6 +263,8 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
 
+    data_clean, interval_cols_clean = dq_check_nunique_values(data, interval_cols, dropna=True)
+
     # create pdf(s) to save plots
     output_files = dict()
     plot_file_name = ''
@@ -274,7 +277,7 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
     if pdf_file_name:
         pdf_file = PdfPages(pdf_file_name)
 
-    data_binned, binning_dict = bin_data(data, interval_cols, bins=bins, quantile=quantile, retbins=True)
+    data_binned, binning_dict = bin_data(data_clean, interval_cols_clean, bins=bins, quantile=quantile, retbins=True)
 
     ### 1. Phik
     if store_each_plot:

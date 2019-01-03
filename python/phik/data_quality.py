@@ -14,13 +14,14 @@ LICENSE.
 """
 
 import warnings
+import copy
 import pandas as pd
 
 
 def dq_check_nunique_values(df, interval_cols, dropna=True):
 
     """
-    Basic data quality checks per column.
+    Basic data quality checks per column in a dataframe.
 
     The following checks are done:
 
@@ -70,12 +71,41 @@ def dq_check_nunique_values(df, interval_cols, dropna=True):
                           .format(col, df[col].nunique()))
 
     df_clean = df.copy()
-    interval_cols_clean = interval_cols
+    interval_cols_clean = copy.copy(interval_cols)
     if len(drop_cols) > 0:
         cols = sorted(list(set(df.columns) - set(drop_cols)))
         interval_cols_clean = sorted(list(set(interval_cols) - set(drop_cols)))
 
-        df_clean = df.copy()
         df_clean = df_clean[cols]
 
     return df_clean, interval_cols_clean
+
+
+def dq_check_hist2d(hist2d):
+
+    """Basic data quality checks for a contingency table
+
+    The Following checks are done:
+
+    1. There must be at least two bins in both the x and y direction.
+
+    2. If the number of bins in the x and/or y direction is larger than 100 a warning is printed.
+
+    :param hist2d: contigency table
+    :return: bool passed_check
+    """
+
+    if 0 in hist2d.shape or 1 in hist2d.shape:
+        warnings.warn('Too few unique values for variable x ({0:d}) or y ({1:d})'.format(
+            hist2d.shape[0], hist2d.shape[1]))
+        return False
+    if hist2d.shape[0] > 100:
+        warnings.warn('The number of unique values of variable x is large: {0:d}. Are you sure this is '
+                      'not an interval variable? Analysis might be slow.'
+                      .format(hist2d.shape[0]))
+    if hist2d.shape[1] > 100:
+        warnings.warn('The number of unique values of variable y is large: {0:d}. Are you sure this is '
+                      'not an interval variable? Analysis might be slow.'
+                      .format(hist2d.shape[0]))
+
+    return True

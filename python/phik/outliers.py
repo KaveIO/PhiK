@@ -500,9 +500,9 @@ def outlier_significance_matrix(df:pd.DataFrame, interval_cols:list=None, CI_met
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
 
-    df, interval_cols = dq_check_nunique_values(df, interval_cols, dropna=dropna)
+    df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
-    data_binned, binning_dict = bin_data(df, interval_cols, retbins=True, bins=bins, quantile=quantile)
+    data_binned, binning_dict = bin_data(df_clean, interval_cols_clean, retbins=True, bins=bins, quantile=quantile)
 
     os_matrix = outlier_significance_matrix_from_rebinned_df(data_binned, binning_dict, CI_method=CI_method,
                                                              ndecimals=ndecimals, dropna=dropna,
@@ -593,9 +593,9 @@ def outlier_significance_matrices(df:pd.DataFrame, interval_cols:list=None, CI_m
             print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
     assert isinstance(interval_cols, list), 'interval_cols is not a list.'
 
-    df, interval_cols = dq_check_nunique_values(df, interval_cols, dropna=dropna)
+    df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
-    data_binned, binning_dict = bin_data(df, interval_cols, retbins=True, bins=bins, quantile=quantile)
+    data_binned, binning_dict = bin_data(df_clean, interval_cols_clean, retbins=True, bins=bins, quantile=quantile)
 
     os_matrices = outlier_significance_matrices_from_rebinned_df(data_binned, binning_dict, CI_method, ndecimals,
                                                                  combinations=combinations, dropna=dropna,
