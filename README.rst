@@ -2,7 +2,7 @@
 Phi_K Correlation Analyzer Library
 ==================================
 
-* Version: 0.9.8. Released: Jan 2019
+* Version: 0.9.9. Released: Jan 2020
 * Documentation: https://phik.readthedocs.io
 * Repository: https://github.com/kaveio/phik
 * Publication: https://arxiv.org/abs/1811.11440
@@ -74,6 +74,9 @@ As a quick example, you can do:
 
   # get the phi_k correlation matrix between all variables
   df.phik_matrix()
+
+  # get global correlations based on phi_k correlation matrix
+  df.global_phik()
 
   # get the significance matrix (expressed as one-sided Z)
   # of the hypothesis test of each variable-pair dependency

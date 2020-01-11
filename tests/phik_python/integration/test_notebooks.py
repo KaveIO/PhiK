@@ -1,6 +1,9 @@
 from phik_python.bases import NotebookTest
 from phik import resources
+import pytest
 
+
+@pytest.mark.filterwarnings("ignore:Session._key_changed is deprecated")
 class PipelineNotebookTest(NotebookTest):
     """Unit test notebook"""
 

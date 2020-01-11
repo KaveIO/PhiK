@@ -17,6 +17,8 @@ import copy
 import numpy as np
 import pandas as pd
 from numba import jit
+from joblib import Parallel, delayed
+import multiprocessing
 
 from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
@@ -306,7 +308,7 @@ def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
         raise ValueError
 
 
-@jit
+# @jit
 def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal') -> list:
     """
     Simulate 2D data and calculate the chi-square statistic for each simulated dataset.
@@ -324,11 +326,15 @@ def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', s
 
     exp_dep = get_dependent_frequency_estimates(values)
 
-    chi2s = []
-
-    for i in range(nsim):
-        simdata = sim_data(exp_dep, method=simulation_method)
-        simchi2 = get_chi2_using_dependent_frequency_estimates(simdata, lambda_)
-        chi2s.append(simchi2)
+    num_cores = multiprocessing.cpu_count()
+    chi2s = Parallel(n_jobs=num_cores)(delayed(simulate)(exp_dep, simulation_method, lambda_) for i in range(nsim))
 
     return chi2s
+
+
+@jit
+def simulate(exp_dep, simulation_method, lambda_):
+    """split off simulate function to allow for parallellization"""
+    simdata = sim_data(exp_dep, method=simulation_method)
+    simchi2 = get_chi2_using_dependent_frequency_estimates(simdata, lambda_)
+    return simchi2

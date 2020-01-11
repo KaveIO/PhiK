@@ -20,7 +20,7 @@ NAME = 'phik'
 
 MAJOR = 0
 REVISION = 9
-PATCH = 8
+PATCH = 9
 DEV = False
 
 # note: also update README.rst
@@ -42,6 +42,7 @@ REQUIREMENTS = [
     'pandas>=0.23.4',
     'matplotlib>=2.2.3',
     'numba>=0.38.1',
+    'joblib>=0.14.1'
     ]
 
 REQUIREMENTS = REQUIREMENTS + TEST_REQUIREMENTS
