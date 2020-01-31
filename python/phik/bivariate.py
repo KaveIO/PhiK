@@ -58,6 +58,46 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
     return corr
 
 
+def bivariate_normal_theory(rho: float, nx:int=-1, ny:int=-1, n:int=1,
+                            sx:np.ndarray=None, sy:np.ndarray=None) -> np.ndarray:
+    """Return binned pdf of bivariate normal distribution.
+
+    This function returns a "perfect" binned bivariate normal distribution.
+
+    :param float rho: tilt parameter
+    :param int nx: number of uniform bins on x-axis. alternative to sx.
+    :param int ny: number of uniform bins on y-axis. alternative to sy.
+    :param np.ndarray sx: bin edges array of x-axis. default is None.
+    :param np.ndarray sy: bin edges array of y-axis. default is None.
+    :param int n: number of entries. default is one.
+    :return: np.ndarray of binned bivariate normal pdf
+    """
+    assert n >= 1, 'Number of entries needs to be one or greater.'
+    assert nx > 1 or sx is not None, 'number of bins along x-axis is unknown'
+    assert ny > 1 or sy is not None, 'number of bins along y-axis is unknown'
+    if sx is None:
+        sx = np.linspace(-5,5,nx+1)
+    if sy is None:
+        sy = np.linspace(-5,5,ny+1)
+
+    bvn = np.zeros((ny, nx))
+    for i in range(len(sx) - 1):
+        for j in range(len(sy) - 1):
+            lower = [sx[i], sy[j]]
+            upper = [sx[i+1], sy[j+1]]
+            p = _mvn_un(rho, lower, upper)
+            bvn[j, i] = p
+    bvn *= n
+
+    # patch for entry levels that are below machine precision
+    # (simulation does not work otherwise)
+    for i in range(len(sx) - 1):
+        for j in range(len(sy) - 1):
+            if bvn[j, i] < np.finfo(np.float).eps:
+                bvn[j, i] = np.finfo(np.float).eps
+    return bvn
+
+
 def chi2_from_phik(rho: float, n: int, subtract_from_chi2:float=0,
                    corr0:list=None, scale:float=None, sx:np.ndarray=None, sy:np.ndarray=None,
                    pedestal:float=0, nx:int=-1, ny:int=-1) -> float:
