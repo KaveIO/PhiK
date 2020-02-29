@@ -16,8 +16,10 @@ LICENSE.
 
 import unittest
 import unittest.mock as mock
+import pytest
 
 
+@pytest.mark.filterwarnings("ignore:Using or importing the ABCs from")
 class PhiKTest(unittest.TestCase):
     """Tests for calculation of Phi_K"""
 
