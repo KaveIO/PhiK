@@ -142,7 +142,7 @@ def poisson_obs_z(nobs:int, nexp:float, nexperr:float) -> float:
             Z = z_from_logp(logp)
         if pvalue==1:
             log1mp = tlogp[1]
-            Z = z_from_logp(logp, flip_sign = True)
+            Z = z_from_logp(log1mp, flip_sign = True)
     # default:
     else:
         Z = -stats.norm.ppf(pvalue)
