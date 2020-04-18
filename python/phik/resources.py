@@ -15,10 +15,7 @@ LICENSE.
 """
 
 import pathlib
-import sys
-
 from pkg_resources import resource_filename
-
 import phik
 
 # Fixtures

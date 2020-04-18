@@ -2,7 +2,7 @@
 Phi_K Correlation Analyzer Library
 ==================================
 
-* Version: 0.9.10. Released: Feb 2020
+* Version: 0.9.11. Released: April 2020
 * Documentation: https://phik.readthedocs.io
 * Repository: https://github.com/kaveio/phik
 * Publication: https://arxiv.org/abs/1811.11440
@@ -25,6 +25,8 @@ Documentation
 =============
 
 The entire Phi_K documentation including tutorials can be found at `read-the-docs <https://phik.readthedocs.io>`_.
+See the tutorials for detailed examples on how to run the code with pandas. We also have one example on how
+calculate the Phi_K correlation matrix for a spark dataframe.
 
 
 Check it out

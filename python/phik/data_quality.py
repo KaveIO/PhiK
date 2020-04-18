@@ -15,7 +15,6 @@ LICENSE.
 
 import warnings
 import copy
-import pandas as pd
 
 
 def dq_check_nunique_values(df, interval_cols, dropna=True):

@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from joblib import Parallel, delayed
-import multiprocessing
 
+from phik.config import ncores as NCORES
 from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
 
@@ -326,8 +326,7 @@ def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', s
 
     exp_dep = get_dependent_frequency_estimates(values)
 
-    num_cores = multiprocessing.cpu_count()
-    chi2s = Parallel(n_jobs=num_cores)(delayed(simulate)(exp_dep, simulation_method, lambda_) for i in range(nsim))
+    chi2s = Parallel(n_jobs=NCORES)(delayed(simulate)(exp_dep, simulation_method, lambda_) for i in range(nsim))
 
     return chi2s
 

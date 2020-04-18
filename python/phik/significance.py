@@ -27,7 +27,7 @@ from scipy import special, optimize
 from phik import definitions as defs
 from .binning import bin_data, create_correlation_overview_table
 from .statistics import get_chi2_using_dependent_frequency_estimates
-from .statistics import estimate_ndof, estimate_simple_ndof, theoretical_ndof
+from .statistics import estimate_ndof, theoretical_ndof
 from .simulation import sim_chi2_distribution
 from .data_quality import dq_check_nunique_values, dq_check_hist2d
 

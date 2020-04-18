@@ -64,9 +64,7 @@ def bin_array(arr, bin_edges):
     bin_labels = []
     bin_indices = pd.Series(binned_arr).value_counts().index
     for i in range(1, len(bin_edges)):
-        if i not in bin_indices:
-            warnings.warn('Empty bin with bin-edges {0:s} - {1:s}'.format(str(bin_edges[i-1]), str(bin_edges[i])))
-        else:
+        if i in bin_indices:
             bin_labels.append((bin_edges[i-1], bin_edges[i]))
 
     # NaN values are added to the overflow bin. Restore NaN values:
@@ -175,11 +173,11 @@ def hist2d_from_rebinned_df(data_binned:pd.DataFrame, dropna:bool=True, drop_und
     assert len(data_binned.columns) == 2, 'DataFrame should contain only two columns'
 
     if not dropna:
-        data_binned = data_binned.fillna(defs.NaN).copy()
+        data_binned.fillna(defs.NaN, inplace=True)
     if drop_underflow:
-        data_binned = data_binned.replace(defs.UF, np.nan).copy()
+        data_binned.replace(defs.UF, np.nan, inplace=True)
     if drop_overflow:
-        data_binned = data_binned.replace(defs.OF, np.nan).copy()
+        data_binned.replace(defs.OF, np.nan, inplace=True)
 
     # create a contingency table
     c0, c1 = data_binned.columns
