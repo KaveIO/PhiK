@@ -26,6 +26,56 @@ from .binning import create_correlation_overview_table, bin_data
 from .data_quality import dq_check_nunique_values, dq_check_hist2d
 
 
+def spark_phik_matrix_from_hist2d_dict(spark_context, hist_dict):
+    """Correlation matrix of bivariate gaussian using spark parallellization over variable-pair 2d histograms
+
+    See spark notebook phik_tutorial_spark.ipynb as example.
+
+    Each input histogram gets converted into correlation coefficient of bivariate gauss
+    with correlation value rho, assuming giving binning and number of records.
+    Correlation coefficient value is between 0 and 1.
+
+    :param spark_context: spark context
+    :param hist_dict: dict of 2d numpy grids with value-counts. keys are histogram names.
+    :return: phik correlation matrix
+    """
+    if not isinstance(hist_dict, dict):
+        raise TypeError('hist_dict should be a dictionary')
+    for k, v in hist_dict.items():
+        if not isinstance(v, np.ndarray):
+            raise TypeError('hist_dict should be a dictionary of 2d numpy arrays.')
+    hist_list = list(hist_dict.items())
+    hist_rdd = spark_context.parallelize(hist_list)
+    phik_rdd = hist_rdd.map(_phik_from_row)
+    phik_list = phik_rdd.collect()
+    phik_overview = create_correlation_overview_table(dict(phik_list))
+    return phik_overview
+
+
+def _phik_from_row(row):
+    """Helper function for spark parallel processing
+
+    :param row: rdd row, where row[0] is key and rdd[1]
+    :return: union of key, phik-value
+    """
+    if not len(row) >= 2:
+        raise RuntimeError('row should have at least two elements.')
+    key = row[0]
+    grid = row[1]
+    if not isinstance(key, str):
+        raise TypeError('key is not a string.')
+    if not isinstance(grid, np.ndarray):
+        raise TypeError('grid is not a numpy array.')
+    c = key.split(':')
+    if len(c) == 2 and c[0] == c[1]:
+        return key, 1.0
+    try:
+        phik_value = phik_from_hist2d(grid)
+    except:
+        phik_value = None
+    return key, phik_value
+
+
 def phik_from_hist2d(observed:np.ndarray, noise_correction:bool=True) -> float:
     """
     correlation coefficient of bivariate gaussian derived from chi2-value

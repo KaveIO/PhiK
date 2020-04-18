@@ -25,6 +25,8 @@ Documentation
 =============
 
 The entire Phi_K documentation including tutorials can be found at `read-the-docs <https://phik.readthedocs.io>`_.
+See the tutorials for detailed examples on how to run the code with pandas. We also have one example on how
+calculate the Phi_K correlation matrix for a spark dataframe.
 
 
 Check it out
