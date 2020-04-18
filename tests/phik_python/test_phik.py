@@ -15,7 +15,6 @@ LICENSE.
 """
 
 import unittest
-import unittest.mock as mock
 import pytest
 
 
@@ -40,7 +39,6 @@ class PhiKTest(unittest.TestCase):
         
         import numpy as np
         import pandas as pd
-        import phik
         from phik import resources
 
         # open fake car insurance data
@@ -58,7 +56,6 @@ class PhiKTest(unittest.TestCase):
 
         import numpy as np
         import pandas as pd
-        import phik
         from phik import resources
 
         # open fake car insurance data
@@ -76,7 +73,6 @@ class PhiKTest(unittest.TestCase):
 
         import numpy as np
         import pandas as pd
-        import phik
         from phik import resources
 
         # open fake car insurance data
@@ -92,9 +88,7 @@ class PhiKTest(unittest.TestCase):
     def test_hist2d(self):
         """Test the calculation of global Phi_K values"""
 
-        import numpy as np
         import pandas as pd
-        import phik
         from phik import resources
 
         # open fake car insurance data
@@ -113,7 +107,6 @@ class PhiKTest(unittest.TestCase):
 
         import numpy as np
         import pandas as pd
-        import phik
         from phik import resources
 
         # open fake car insurance data

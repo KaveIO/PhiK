@@ -16,7 +16,8 @@ LICENSE.
 import numpy as np
 import itertools
 import pandas as pd
-import warnings
+from joblib import Parallel, delayed
+from phik.config import ncores as NCORES
 
 from phik import definitions as defs
 from .bivariate import phik_from_chi2
@@ -83,35 +84,45 @@ def phik_from_rebinned_df(data_binned:pd.DataFrame, noise_correction:bool=True, 
     if not dropna:
         # if not dropna replace the NaN values with the string NaN. Otherwise the rows with NaN are dropped
         # by the groupby.
-        data_binned = data_binned.replace(np.nan, defs.NaN).copy()
+        data_binned.replace(np.nan, defs.NaN, inplace=True)
     if drop_underflow:
-        data_binned = data_binned.replace(defs.UF, np.nan).copy()
+        data_binned.replace(defs.UF, np.nan, inplace=True)
     if drop_overflow:
-        data_binned = data_binned.replace(defs.OF, np.nan).copy()
+        data_binned.replace(defs.OF, np.nan, inplace=True)
 
+    # phik_list = [_calc_phik(co, data_binned[list(co)], noise_correction)
+    #              for co in itertools.combinations_with_replacement(data_binned.columns.values, 2)]
 
-    phiks = {}
-    for i, comb in enumerate(itertools.combinations_with_replacement(data_binned.columns.values, 2)):
-        c0, c1 = comb
-        if c0 == c1:
-            phiks[':'.join(comb)] = 1
-            continue
-        datahist = data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
+    phik_list = Parallel(n_jobs=NCORES)(delayed(_calc_phik)(co, data_binned[list(co)], noise_correction)
+                                        for co in itertools.combinations_with_replacement(data_binned.columns.values, 2))
 
-        # If 0 or only 1 values for one of the two variables, it is not possible to calculate phik.
-        # This check needs to be done after creation of OF, UF and NaN bins.
-        if 1 in datahist.shape or 0 in datahist.shape:
-            phiks[':'.join(comb)] = np.nan
-            warnings.warn('Too few unique values for variable {0:s} ({1:d}) or {2:s} ({3:d}) to calculate phik'.format(
-                c0, datahist.shape[0], c1, datahist.shape[1]))
-            continue
-
-        datahist.columns = datahist.columns.droplevel()
-        phikvalue = phik_from_hist2d(datahist.values, noise_correction=noise_correction)
-        phiks[':'.join(comb)] = phikvalue
-
-    phik_overview = create_correlation_overview_table(phiks)
+    phik_overview = create_correlation_overview_table(dict(phik_list))
     return phik_overview
+
+
+def _calc_phik(comb, data_binned, noise_correction):
+    """Split off calculation of phik for parallel processing
+
+    :param tuple comb: union of two string columns
+    :param pd.DataFrame data_binned: input data where interval variables have been binned
+    :param bool noise_correction: apply noise correction in phik calculation
+    :return:
+    """
+    c0, c1 = comb
+    combi = ':'.join(comb)
+    if c0 == c1:
+        return (combi, 1.0)
+
+    datahist = data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
+
+    # If 0 or only 1 values for one of the two variables, it is not possible to calculate phik.
+    # This check needs to be done after creation of OF, UF and NaN bins.
+    if any([v in datahist.shape for v in [0, 1]]):
+        return (combi, np.nan)
+
+    datahist.columns = datahist.columns.droplevel()
+    phikvalue = phik_from_hist2d(datahist.values, noise_correction=noise_correction)
+    return (combi, phikvalue)
 
 
 def phik_matrix(df:pd.DataFrame, interval_cols:list=None, bins=10, quantile:bool=False, noise_correction:bool=True,

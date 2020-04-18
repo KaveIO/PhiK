@@ -20,7 +20,7 @@ NAME = 'phik'
 
 MAJOR = 0
 REVISION = 9
-PATCH = 10
+PATCH = 11
 DEV = False
 
 # note: also update README.rst
@@ -45,7 +45,8 @@ REQUIREMENTS = [
     'joblib>=0.14.1'
     ]
 
-REQUIREMENTS = REQUIREMENTS + TEST_REQUIREMENTS
+if DEV:
+    REQUIREMENTS += TEST_REQUIREMENTS
 
 CMD_CLASS = dict()
 COMMAND_OPTIONS = dict()

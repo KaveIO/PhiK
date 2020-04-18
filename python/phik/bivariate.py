@@ -18,6 +18,8 @@ LICENSE.
 import numpy as np
 from scipy.stats import mvn
 from scipy import optimize
+# from joblib import Parallel, delayed
+# from phik.config import ncores as NCORES
 
 import warnings
 
@@ -33,8 +35,8 @@ def _mvn_un(rho: float, lower: tuple, upper: tuple) -> float:
     :returns float: integral value
     '''
     mu = np.array([0., 0.])
-    S = np.array([[1.,rho],[rho,1.0]])
-    p,i = mvn.mvnun(lower,upper,mu,S)
+    S = np.array([[1., rho], [rho, 1.]])
+    p, i = mvn.mvnun(lower, upper, mu, S)
     return p
 
 
@@ -48,14 +50,38 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
     :param np.ndarray sy: bin edges array of y-axis
     :returns list: list of integral values
     '''
-    corr = []
-    for i in range(len(sx)-1):
-        for j in range(len(sy)-1):
-            lower = [sx[i],sy[j]]
-            upper = [sx[i+1],sy[j+1]]
-            p = _mvn_un(rho,lower,upper)
-            corr.append(p)
+    # ranges = [([sx[i], sy[j]], [sx[i+1], sy[j+1]]) for i in range(len(sx) - 1) for j in range(len(sy) - 1)]
+    # corr = [mvn.mvnun(lower, upper, mu, S)[0] for lower, upper in ranges]
+    # return corr
+
+    # mean and covariance
+    mu = np.array([0., 0.])
+    S = np.array([[1., rho], [rho, 1.]])
+
+    # add half block, which is symmetric in x
+    odd_odd = False
+    ranges = [([sx[i], sy[j]], [sx[i+1], sy[j+1]]) for i in range((len(sx)-1)//2) for j in range(len(sy) - 1)]
+    # add odd middle row, which is symmetric in y
+    if (len(sx)-1) % 2 == 1:
+        i = (len(sx)-1)//2
+        ranges += [([sx[i], sy[j]], [sx[i+1], sy[j+1]]) for j in range((len(sy)-1)//2)]
+        # add center point, add this only once
+        if (len(sy)-1) % 2 == 1:
+            j = (len(sy)-1)//2
+            ranges.append(([sx[i], sy[j]], [sx[i+1], sy[j+1]]))
+            odd_odd = True
+
+    corr = [_calc_mvnun(lower, upper, mu, S) for lower, upper in ranges]
+    # corr = Parallel(n_jobs=NCORES, prefer="threads")(delayed(_calc_mvnun)(lower, upper, mu, S) for lower, upper in ranges)
+
+    # add second half, exclude center
+    corr += corr if not odd_odd else corr[:-1]
+
     return corr
+
+
+def _calc_mvnun(lower, upper, mu, S):
+    return mvn.mvnun(lower, upper, mu, S)[0]
 
 
 def bivariate_normal_theory(rho: float, nx:int=-1, ny:int=-1, n:int=1,
@@ -171,18 +197,19 @@ def phik_from_chi2(chi2:float, n:int, nx:int, ny:int, sx:np.ndarray=None, sy:np.
     # scale ensures that for rho=1, chi2 is the maximum possible value
     corr1 = _mvn_array(1, sx, sy)
     if 0 in corr0 and len(corr0)>10000:
-        warnings.warn('Too many unique values. Are you sure that interval variables are set correctly?')
-        return np.nan
+        warnings.warn('Many cells: {0:d}. Are interval variables set correctly?'.format(len(corr0)))
 
     chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 for c0,c1 in zip(corr0,corr1)])
     chi2_max = n * min(nx-1, ny-1)
     scale = (chi2_max - pedestal) / chi2_one
-    if chi2_max < chi2 and np.isclose(chi2, chi2_max, atol=1E-14):
+    if chi2 > chi2_max and np.isclose(chi2, chi2_max, atol=1E-14):
         chi2 = chi2_max
 
     # only solve for rho if chi2 exceeds noise pedestal
     if chi2 <= pedestal:
-        return 0
+        return 0.
+    if chi2 >= chi2_max:
+        return 1.
 
-    rho = optimize.brentq(chi2_from_phik, 0, 1, args=(n, chi2, corr0, scale, sx, sy, pedestal))
+    rho = optimize.brentq(chi2_from_phik, 0, 1, args=(n, chi2, corr0, scale, sx, sy, pedestal), xtol=1e-5)
     return rho
