@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from joblib import Parallel, delayed
+from scipy.stats import power_divergence
 
 from phik.config import ncores as NCORES
 from .statistics import get_dependent_frequency_estimates
@@ -309,7 +310,8 @@ def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
 
 
 # @jit
-def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal') -> list:
+def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal',
+                          alt_hypothesis=False) -> list:
     """
     Simulate 2D data and calculate the chi-square statistic for each simulated dataset.
 
@@ -318,21 +320,22 @@ def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', s
     :param str simulation_method: sampling method. Options: [multinominal, hypergeometric, row_product_multinominal,\
      col_product_multinominal]
     :param str lambda_: test statistic. Available options are [pearson, log-likelihood].
+    :param bool alt_hypothesis: if True, simulate values directly, and not its dependent frequency estimates.
     :returns chi2s: list of chi2 values for each simulated dataset
     """
     vals = values.values if isinstance(values, pd.DataFrame) else values
     if not isinstance(vals, np.ndarray):
         raise TypeError('values is not a numpy array.')
 
-    exp_dep = get_dependent_frequency_estimates(values)
+    exp_dep = get_dependent_frequency_estimates(vals) if not alt_hypothesis else vals
 
-    chi2s = Parallel(n_jobs=NCORES)(delayed(simulate)(exp_dep, simulation_method, lambda_) for i in range(nsim))
+    chi2s = Parallel(n_jobs=NCORES)(delayed(_simulate_and_fit)(exp_dep, simulation_method, lambda_) for i in range(nsim))
 
     return chi2s
 
 
 @jit
-def simulate(exp_dep, simulation_method, lambda_):
+def _simulate_and_fit(exp_dep, simulation_method='multinominal', lambda_='log-likelihood'):
     """split off simulate function to allow for parallellization"""
     simdata = sim_data(exp_dep, method=simulation_method)
     simchi2 = get_chi2_using_dependent_frequency_estimates(simdata, lambda_)
