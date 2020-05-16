@@ -19,8 +19,8 @@ from setuptools import setup
 NAME = 'phik'
 
 MAJOR = 0
-REVISION = 9
-PATCH = 11
+REVISION = 10
+PATCH = 0
 DEV = False
 
 # note: also update README.rst
@@ -30,11 +30,12 @@ FULL_VERSION = VERSION
 if DEV:
     FULL_VERSION += '.dev'
 
-TEST_REQUIREMENTS = ['pytest>=4.0.2',
-                     'pytest-pylint>=0.13.0',
-                     'nbconvert>=5.3.1',
-                     'jupyter_client>=5.2.3',
-                     ]
+TEST_REQUIREMENTS = [
+    'pytest>=4.0.2',
+    'pytest-pylint>=0.13.0',
+    'nbconvert>=5.3.1',
+    'jupyter_client>=5.2.3',
+]
 
 REQUIREMENTS = [
     'numpy>=1.15.4',
@@ -43,7 +44,7 @@ REQUIREMENTS = [
     'matplotlib>=2.2.3',
     'numba>=0.38.1',
     'joblib>=0.14.1'
-    ]
+]
 
 if DEV:
     REQUIREMENTS += TEST_REQUIREMENTS
@@ -54,7 +55,7 @@ COMMAND_OPTIONS = dict()
 EXCLUDE_PACKAGES = []
 EXTERNAL_MODULES = []
 
-with open("README.rst", "r") as fh:
+with open("README.rst") as fh:
     long_description = fh.read()
 
 
@@ -77,14 +78,10 @@ full_version = '{full_version!s}'
 release = {is_release!s}
 """
 
-    version_file = open(filename, 'w')
-    try:
-        version_file.write(version_str.format(name=NAME.lower(),
-                                              version=VERSION,
-                                              full_version=FULL_VERSION,
-                                              is_release=not DEV))
-    finally:
-        version_file.close()
+    with open(filename, 'w') as version_file:
+        version_file.write(
+            version_str.format(name=NAME.lower(), version=VERSION, full_version=FULL_VERSION, is_release=not DEV)
+        )
 
 
 def setup_package() -> None:
@@ -121,6 +118,7 @@ def setup_package() -> None:
           classifiers=(
               "Programming Language :: Python :: 3",
               "Operating System :: OS Independent",
+              "License :: OSI Approved :: Apache Software License",
           ),
           # The following 'creates' executable scripts for *nix and Windows.
           # As an added bonus the Windows scripts will auto-magically

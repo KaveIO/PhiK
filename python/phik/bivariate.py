@@ -4,7 +4,7 @@ Created: 2019/11/23
 
 Description:
     Convert Pearson correlation value into a chi2 value of a contingency test 
-    matrix of a bivariate gaussion, and vice-versa. 
+    matrix of a bivariate gaussian, and vice-versa.
     Calculation uses scipy's mvn library.
 
 Authors:
@@ -18,8 +18,6 @@ LICENSE.
 import numpy as np
 from scipy.stats import mvn
 from scipy import optimize
-# from joblib import Parallel, delayed
-# from phik.config import ncores as NCORES
 
 import warnings
 
@@ -72,7 +70,6 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
             odd_odd = True
 
     corr = [_calc_mvnun(lower, upper, mu, S) for lower, upper in ranges]
-    # corr = Parallel(n_jobs=NCORES, prefer="threads")(delayed(_calc_mvnun)(lower, upper, mu, S) for lower, upper in ranges)
 
     # add second half, exclude center
     corr += corr if not odd_odd else corr[:-1]
@@ -98,9 +95,9 @@ def bivariate_normal_theory(rho: float, nx:int=-1, ny:int=-1, n:int=1,
     :param int n: number of entries. default is one.
     :return: np.ndarray of binned bivariate normal pdf
     """
-    assert n >= 1, 'Number of entries needs to be one or greater.'
-    assert nx > 1 or sx is not None, 'number of bins along x-axis is unknown'
-    assert ny > 1 or sy is not None, 'number of bins along y-axis is unknown'
+
+    if n < 1:
+        raise ValueError('Number of entries needs to be one or greater.')
     if sx is None:
         sx = np.linspace(-5,5,nx+1)
     if sy is None:
@@ -109,8 +106,8 @@ def bivariate_normal_theory(rho: float, nx:int=-1, ny:int=-1, n:int=1,
     bvn = np.zeros((ny, nx))
     for i in range(len(sx) - 1):
         for j in range(len(sy) - 1):
-            lower = [sx[i], sy[j]]
-            upper = [sx[i+1], sy[j+1]]
+            lower = (sx[i], sy[j])
+            upper = (sx[i+1], sy[j+1])
             p = _mvn_un(rho, lower, upper)
             bvn[j, i] = p
     bvn *= n
@@ -144,23 +141,24 @@ def chi2_from_phik(rho: float, n: int, subtract_from_chi2:float=0,
     :param int ny: number of uniform bins on y-axis. alternative to sy.
     :returns float: chi2 value    
     '''
-    assert nx>1 or sx is not None, 'number of bins along x-axis is unknown'
-    assert ny>1 or sy is not None, 'number of bins along y-axis is unknown'
+
     if sx is None:
         sx = np.linspace(-5,5,nx+1)
+
     if sy is None:
         sy = np.linspace(-5,5,ny+1)
+
     if corr0 is None:
         corr0 = _mvn_array(0, sx, sy)
     if scale is None:
         # scale ensures that for rho=1, chi2 is the maximum possible value
         corr1 = _mvn_array(1, sx, sy)
-        chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 for c0,c1 in zip(corr0,corr1)])
+        chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 for c0, c1 in zip(corr0, corr1)])
         chi2_max = n * min(nx-1, ny-1)
         scale = (chi2_max - pedestal) / chi2_one
 
     corrr = _mvn_array(rho, sx, sy)
-    chi2 = pedestal + ( n * sum([((cr-c0)*(cr-c0)) / c0 for c0,cr in zip(corr0,corrr)]) ) * scale
+    chi2 = pedestal + (n * sum([((cr-c0)*(cr-c0)) / c0 for c0, cr in zip(corr0, corrr)])) * scale
     return chi2 - subtract_from_chi2
 
 
@@ -184,19 +182,24 @@ def phik_from_chi2(chi2:float, n:int, nx:int, ny:int, sx:np.ndarray=None, sy:np.
     :returns float: correlation coefficient
     '''
 
+    if pedestal < 0:
+        raise ValueError('noise pedestal should be greater than zero.')
 
-    assert nx>1 or sx is not None, 'number of bins along x-axis is unknown'
-    assert ny>1 or sy is not None, 'number of bins along y-axis is unknown'
-    assert pedestal>=0, 'noise pedestal should be greater than zero.'
     if sx is None:
         sx = np.linspace(-5,5,nx+1)
+    elif nx <= 1:
+        raise ValueError('number of bins along x-axis is unknown')
+
     if sy is None:
         sy = np.linspace(-5,5,ny+1)
+    elif ny <= 1:
+        raise ValueError('number of bins along y-axis is unknown')
+
     corr0 = _mvn_array(0, sx, sy)
 
     # scale ensures that for rho=1, chi2 is the maximum possible value
     corr1 = _mvn_array(1, sx, sy)
-    if 0 in corr0 and len(corr0)>10000:
+    if 0 in corr0 and len(corr0) > 10000:
         warnings.warn('Many cells: {0:d}. Are interval variables set correctly?'.format(len(corr0)))
 
     chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 for c0,c1 in zip(corr0,corr1)])

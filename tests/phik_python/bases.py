@@ -23,7 +23,7 @@ class NotebookTest(unittest.TestCase):
         except CellExecutionError:
             # store if failed
             status = False
-            executed_notebook = os.getcwd() + '/' + notebook.split('/')[-1]
+            executed_notebook = os.getcwd() + os.sep + notebook.split(os.sep)[-1]
             with open(executed_notebook, mode='wt') as f:
                 nbformat.write(nb, f)
 
