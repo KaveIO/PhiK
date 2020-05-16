@@ -158,8 +158,4 @@ class PhiKTest(unittest.TestCase):
         interval_cols = ['mileage', 'driver_age']
         om = df.outlier_significance_matrices(interval_cols=interval_cols)
 
-        assert isinstance(om, dict)
-        print(om)
-
-        # self.assertTrue(np.isclose(om.values[0,1], 21.483476494343552))
-        # self.assertTrue(np.isclose(om.values[2,4], -1.246784034214704))
+        self.assertTrue(isinstance(om, dict))
