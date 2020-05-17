@@ -18,9 +18,6 @@ LICENSE.
 import numpy as np
 from scipy.stats import mvn
 from scipy import optimize
-# from joblib import Parallel, delayed
-# from phik.config import ncores as NCORES
-
 import warnings
 
 
@@ -72,7 +69,6 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
             odd_odd = True
 
     corr = [_calc_mvnun(lower, upper, mu, S) for lower, upper in ranges]
-    # corr = Parallel(n_jobs=NCORES, prefer="threads")(delayed(_calc_mvnun)(lower, upper, mu, S) for lower, upper in ranges)
 
     # add second half, exclude center
     corr += corr if not odd_odd else corr[:-1]

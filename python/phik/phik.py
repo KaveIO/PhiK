@@ -17,7 +17,6 @@ import numpy as np
 import itertools
 import pandas as pd
 from joblib import Parallel, delayed
-from phik.config import ncores as NCORES
 
 from phik import definitions as defs
 from .bivariate import phik_from_chi2
@@ -143,6 +142,7 @@ def phik_from_rebinned_df(data_binned:pd.DataFrame, noise_correction:bool=True, 
     # phik_list = [_calc_phik(co, data_binned[list(co)], noise_correction)
     #              for co in itertools.combinations_with_replacement(data_binned.columns.values, 2)]
 
+    from phik.config import ncores as NCORES
     phik_list = Parallel(n_jobs=NCORES)(delayed(_calc_phik)(co, data_binned[list(co)], noise_correction)
                                         for co in itertools.combinations_with_replacement(data_binned.columns.values, 2))
 
