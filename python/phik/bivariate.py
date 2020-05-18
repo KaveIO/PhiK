@@ -14,12 +14,11 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted according to the terms listed in the file
 LICENSE.
 """
+import warnings
 
 import numpy as np
 from scipy.stats import mvn
 from scipy import optimize
-
-import warnings
 
 
 def _mvn_un(rho: float, lower: tuple, upper: tuple) -> float:

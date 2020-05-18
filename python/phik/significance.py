@@ -129,19 +129,20 @@ def significance_from_chi2_asymptotic(values:np.ndarray, chi2:float) -> Tuple[fl
 
 
 def significance_from_chi2_MC(chi2:float, values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
-                              simulation_method:str='multinominal') -> Tuple[float, float]:
+                              simulation_method:str='multinominal', chi2s=None) -> Tuple[float,float]:
     """
     Convert a chi2 into significance using knowledge about the shape of the chi2 distribution of simulated data
 
     Calculate significance based on simulation (MC method), using a simple percentile.
 
     :param float chi2: chi2 value
-    :param list chi2s: chi2s values
-    :returns: p_value, significance
+    :param list chi2s: provide your own chi2s values (optional)
+    :returns: pvalue, significance
     """
 
     # determine effective number of degrees of freedom using simulation
-    chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method)
+    if chi2s is None:
+        chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method)
 
     # calculate p_value based on simulation (MC method)
     empirical_p_value = 1. - stats.percentileofscore(chi2s, chi2) / 100.
@@ -151,7 +152,7 @@ def significance_from_chi2_MC(chi2:float, values:np.ndarray, nsim:int=1000, lamb
 
 
 def significance_from_chi2_hybrid(chi2:float, values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
-                                  simulation_method:str='multinominal') -> Tuple[float,float]:
+                                  simulation_method:str='multinominal', chi2s=None) -> Tuple[float,float]:
     """
     Convert a chi2 into significance using a hybrid method
 
@@ -166,13 +167,14 @@ def significance_from_chi2_hybrid(chi2:float, values:np.ndarray, nsim:int=1000, 
     h(x|f) = N * (f * chi2(x, ndof) + (1-f) * gauss(x, ndof, sqrt(ndof))
 
     :param float chi2: chi2 value
-    :param list chi2s: chi2s values
+    :param list chi2s: provide your own chi2s values (optional)
     :param float avg_per_bin: average number of data points per bin
     :returns: p_value, significance
     """
 
     # determine effective number of degrees of freedom using simulation
-    chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method)
+    if chi2s is None:
+        chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method)
 
     # average number of records per bin
     avg_per_bin = values.sum() / values.shape[0] * values.shape[1]

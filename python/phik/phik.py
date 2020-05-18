@@ -18,7 +18,6 @@ import numpy as np
 import itertools
 import pandas as pd
 from joblib import Parallel, delayed
-from phik.config import ncores as NCORES
 
 from phik import definitions as defs
 from .bivariate import phik_from_chi2
@@ -132,6 +131,8 @@ def phik_from_rebinned_df(data_binned: pd.DataFrame, noise_correction:bool=True,
 
     # cache column order (https://github.com/KaveIO/PhiK/issues/1)
     column_order = data_binned.columns
+    
+    from phik.config import ncores as NCORES
     if NCORES == 1:
         # Useful when for instance using cProfiler: https://docs.python.org/3/library/profile.html
         phik_list = [
