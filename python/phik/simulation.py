@@ -13,7 +13,8 @@ modification, are permitted according to the terms listed in the file
 LICENSE.
 """
 
-import copy
+from typing import Union
+
 import numpy as np
 import pandas as pd
 from numba import jit
@@ -21,6 +22,7 @@ from joblib import Parallel, delayed
 
 from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
+
 
 @jit
 def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
@@ -32,16 +34,15 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     :param int ndata: number of simulations
     :return: simulated data
     """
-    if not isinstance(hist, np.ndarray):
-        raise TypeError('hist is not a numpy array.')
 
     if ndata <= 0:
         ndata = hist.sum()
-    assert ndata>0, 'ndata has to be positive.'
+    if ndata <= 0:
+        raise ValueError('ndata (or hist.sum()) has to be positive')
     
     # scale and ravel
-    hc = copy.copy(hist) * ((1.0 * ndata) / hist.sum())
-    hcr = hc.ravel() 
+    hc = hist[:] * ((1.0 * ndata) / hist.sum())
+    hcr = hc.ravel()
 
     # first estimate, unconstrained
     hout = np.zeros(hcr.shape)
@@ -62,7 +63,7 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
         hran = np.random.uniform(0,hmax)
 
         if hran<h:
-            if wgt==1:
+            if wgt == 1:
                 hout[ibin] += 1
             else:
                 if hout[ibin] > 0:
@@ -78,7 +79,7 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
 
 # --- jit turned off for now, somehow not working for patefield; computer dependent!
 #@jit
-def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
+def sim_2d_data_patefield(data: np.ndarray) -> np.ndarray:
     """
     Simulate a two dimensional dataset with fixed row and column totals.
 
@@ -91,12 +92,9 @@ def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
     This table is used as probability density function.
     :return: simulated data
     """
-    if not isinstance(data, np.ndarray):
-        raise TypeError('data is not a numpy array.')
 
     # number of rows and columns
-    nrows = data.shape[0]
-    ncols = data.shape[1]
+    nrows, ncols = data.shape
 
     # totals per row and column
     nrowt = data.sum(axis=1)
@@ -110,17 +108,15 @@ def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
     fact = [x]
 
     for i in range(1, ntotal + 1):
-        x = x + np.log(i)
+        x += np.log(i)
         fact.append(x)
 
     # initialize matrix for end result
-    matrix = np.zeros(data.shape[0] * data.shape[1])
+    matrix = np.empty(data.shape[0] * data.shape[1])
     matrix[:] = np.nan
 
     # Construct a random matrix.
-
     jwork = []
-
     for i in range(0, ncols - 1):
         jwork.append(int(np.round(ncolt[i])))
 
@@ -133,7 +129,6 @@ def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
         jc = int(jc - nrowtl)
 
         for m in range(0, ncols - 1):
-
             id = jwork[m]
             ie = int(np.round(ic))
             ic = int(np.round(ic - id))
@@ -150,11 +145,11 @@ def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
             r = np.random.uniform()
 
             #  Compute the conditional expected value of MATRIX(L,M).
+            done1 = False
+            done2 = False
 
-            done1 = 0
-
-            while (True):  # infinit loop!!!
-                nlm = int(np.round((ia * id) / (ie) + 0.5))
+            while True:  # infinite loop!!!
+                nlm = int(np.round((ia * id) / ie + 0.5))
                 iap = int(np.round(ia + 1))
                 idp = int(np.round(id + 1))
                 igp = int(np.round(idp - nlm))
@@ -162,7 +157,7 @@ def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
                 nlmp = int(np.round(nlm + 1))
                 iip = int(np.round(ii + nlmp))
 
-                x = np.exp(fact[iap - 1] + fact[ib] + fact[ic] + fact[idp - 1] - \
+                x = np.exp(fact[iap - 1] + fact[ib] + fact[ic] + fact[idp - 1] -
                            fact[ie] - fact[nlmp - 1] - fact[igp - 1] - fact[ihp - 1] - fact[iip - 1])
 
                 if (r < x) or np.isclose(r, x):
@@ -172,27 +167,26 @@ def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
                 sumprb = x
                 y = x
                 nll = nlm
-                lsp = 0
-                lsm = 0
+                lsp = False
+                lsm = False
 
                 # Increment entry in row L, column M.
-
                 while not lsp:
                     j = int(np.round((id - nlm) * (ia - nlm)))
 
                     if np.isclose(j, 0):
                         # if j == 0:
-                        lsp = 1
+                        lsp = True
                     else:
-                        nlm = nlm + 1
+                        nlm += 1
                         x = x * j / (nlm * (ii + nlm))
-                        sumprb = sumprb + x
+                        sumprb += x
 
                         if (r < sumprb) or np.isclose(r, sumprb):
-                            done1 = 1
+                            done1 = True
                             break
 
-                    done2 = 0
+                    done2 = False
 
                     while not lsm:
 
@@ -201,39 +195,32 @@ def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
                         j = nll * (ii + nll)
 
                         if np.isclose(j, 0):
-                            lsm = 1
+                            lsm = True
                             break
 
-                        nll = nll - 1
+                        nll -= 1
                         if np.isclose((id - nll) * (ia - nll), 0):  # make sure not to divide by zero
                             y = np.inf
                         else:
                             y = y * j / ((id - nll) * (ia - nll))
-                        sumprb = sumprb + y
+                        sumprb += y
 
                         if (r < sumprb) or np.isclose(r, sumprb):
                             nlm = nll
-                            done2 = 1
+                            done2 = True
                             break
-
-                        if not lsp:
-                            break
-
                     if done2:
                         break
 
-                if done1:
-                    break
-
-                if done2:
+                if done1 or done2:
                     break
 
                 r = np.random.uniform()
                 r = sumprb * r
 
             matrix[l + m * nrows] = nlm
-            ia = ia - nlm
-            jwork[m] = jwork[m] - nlm
+            ia -= nlm
+            jwork[m] -= nlm
 
         matrix[l + (ncols - 1) * nrows] = ia
 
@@ -253,30 +240,28 @@ def sim_2d_data_patefield(data:np.ndarray) -> np.ndarray:
     return matrix
 
 
-def sim_2d_product_multinominal(data:np.ndarray, axis:str) -> np.ndarray:
+def sim_2d_product_multinominal(data:np.ndarray, axis: int) -> np.ndarray:
     """
     Simulate 2 dimensional data with either row or column totals fixed.
 
     :param data: contingency table, which contains the observed number of occurrences in each category.\
     This table is used as probability density function.
-    :param axis: fix row totals (rows) or column totals (cols).
+    :param axis: fix row totals (0) or column totals (1).
     :return: simulated data
     """
-    if not isinstance(data, np.ndarray):
-        raise TypeError('data is not a numpy array.')
 
-    if axis == 'cols':
+    if axis == 1:
         return np.array([list(sim_2d_data(data[i])) for i in range(data.shape[0])])
-    if axis == 'rows':
+    elif axis == 0:
         return np.array([list(sim_2d_data(data.T[i])) for i in range(data.shape[1])]).T
     else:
-        raise ValueError
+        raise NotImplementedError("Axis should be 0 (row) or 1 (column).")
 
 
-@jit
+@jit(forceobj=True)
 def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
     """
-    Simulate a 2 dimenstional dataset given a 2 dimensional pdf
+    Simulate a 2 dimensional dataset given a 2 dimensional pdf
 
     Several simulation methods are provided:
 
@@ -291,25 +276,22 @@ def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
      col_product_multinominal]
     :return: simulated data
     """
-    assert method in ['multinominal', 'hypergeometric', 'row_product_multinominal', 'col_product_multinominal'], 'selected method not recognized.'
-    if not isinstance(data, np.ndarray):
-        raise TypeError('data is not a numpy array.')
 
     if method == 'multinominal':
         return sim_2d_data(data)
     elif method == 'hypergeometric':
         return sim_2d_data_patefield(data)
     elif method == 'row_product_multinominal':
-        return sim_2d_product_multinominal(data, 'rows')
+        return sim_2d_product_multinominal(data, 0)
     elif method == 'col_product_multinominal':
-        return sim_2d_product_multinominal(data, 'cols')
+        return sim_2d_product_multinominal(data, 1)
     else:
-        raise ValueError
+        raise NotImplementedError('selected method not recognized.')
 
 
 # @jit
-def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal',
-                          alt_hypothesis=False) -> list:
+def sim_chi2_distribution(values: Union[pd.DataFrame, np.ndarray], nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal'
+                          alt_hypothesis:bool=False) -> list:
     """
     Simulate 2D data and calculate the chi-square statistic for each simulated dataset.
 
@@ -321,9 +303,7 @@ def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', s
     :param bool alt_hypothesis: if True, simulate values directly, and not its dependent frequency estimates.
     :returns chi2s: list of chi2 values for each simulated dataset
     """
-    vals = values.values if isinstance(values, pd.DataFrame) else values
-    if not isinstance(vals, np.ndarray):
-        raise TypeError('values is not a numpy array.')
+    values = values.values if isinstance(values, pd.DataFrame) else values
 
     exp_dep = get_dependent_frequency_estimates(vals) if not alt_hypothesis else vals
 
@@ -333,8 +313,8 @@ def sim_chi2_distribution(values, nsim:int=1000, lambda_:str='log-likelihood', s
     return chi2s
 
 
-@jit
-def _simulate_and_fit(exp_dep, simulation_method='multinominal', lambda_='log-likelihood'):
+@jit(forceobj=True)
+def _simulate_and_fit(exp_dep: np.ndarray, simulation_method: str='multinominal', lambda_:str='log-likelihood') -> float:
     """split off simulate function to allow for parallellization"""
     simdata = sim_data(exp_dep, method=simulation_method)
     simchi2 = get_chi2_using_dependent_frequency_estimates(simdata, lambda_)

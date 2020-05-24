@@ -13,7 +13,7 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted according to the terms listed in the file
 LICENSE.
 """
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -30,8 +30,10 @@ from .statistics import get_chi2_using_dependent_frequency_estimates
 from .statistics import estimate_ndof, theoretical_ndof
 from .simulation import sim_chi2_distribution
 from .data_quality import dq_check_nunique_values, dq_check_hist2d
+from .utils import array_like_to_dataframe, guess_interval_cols
 
-def fit_test_statistic_distribution(chi2s:list, nbins:int=50) -> Union[float,float,float,float]:
+
+def fit_test_statistic_distribution(chi2s: Union[list, np.ndarray], nbins:int=50) -> Tuple[float, float, float, float]:
     """
     Fit the hybrid chi2-distribution to the data to find f.
 
@@ -45,8 +47,6 @@ def fit_test_statistic_distribution(chi2s:list, nbins:int=50) -> Union[float,flo
     :param int nbins: in order to fit the data a histogram is created with nbins number of bins
     :returns: f, ndof, sigma (width of gauss), bw (bin width)
     """
-    if not isinstance(chi2s, (list, np.ndarray)):
-        raise TypeError('chi2s is not array like.')
 
     def myfunc(x, N, f, k, sigma):
         return N * (f * stats.chi2.pdf(x, k) + (1 - f) * stats.norm.pdf(x, k, sigma))
@@ -87,50 +87,49 @@ def hfunc(x:float, N:float, f:float, k:float, sigma:float) -> float:
     return N * (f * stats.chi2.pdf(x, k) + (1 - f) * stats.norm.pdf(x, k, sigma))
 
 
-def significance_from_chi2_ndof(chi2:float, ndof:float) -> Union[float,float]:
+def significance_from_chi2_ndof(chi2: float, ndof: float) -> Tuple[float, float]:
     """
     Convert a chi2 into significance using knowledge about the number of degrees of freedom
 
-    Convertions is done using asymptotic approximation.
+    Conversion is done using asymptotic approximation.
 
     :param float chi2: chi2 value
     :param float ndof: number of degrees of freedom
-    :returns: pvalue, significance
+    :returns: p_value, significance
     """
-    pvalue = stats.chi2.sf(chi2, ndof)
-    Zvalue = -stats.norm.ppf(pvalue)
+    p_value = stats.chi2.sf(chi2, ndof)
+    z_value = -stats.norm.ppf(p_value)
 
-    # scenario where pvalue is too small to evaluate Z
+    # scenario where p_value is too small to evaluate Z
     # use Chernoff approximation for p-value upper bound
     # see: https://en.wikipedia.org/wiki/Chi-squared_distribution
-    if pvalue == 0:
+    if p_value == 0:
         z = chi2 / ndof
         u = -math.log(2 * math.pi) - ndof * math.log(z) + ndof * (z - 1)
-        Zvalue = math.sqrt(u - math.log(u))
+        z_value = math.sqrt(u - math.log(u))
 
-    return pvalue, Zvalue
+    return p_value, z_value
 
-def significance_from_chi2_asymptotic(values:np.ndarray, chi2:float) -> Union[float,float]:
+
+def significance_from_chi2_asymptotic(values:np.ndarray, chi2:float) -> Tuple[float,float]:
     """ 
     Convert a chi2 into significance using knowledge about the number of degrees of freedom
     
-    Convertions is done using asymptotic approximation.
+    Convention is done using asymptotic approximation.
 
     :param float chi2: chi2 value
     :param float ndof: number of degrees of freedom
-    :returns: pvalue, significance
+    :returns: p_value, significance
     """
-    if not isinstance(values, np.ndarray):
-        raise TypeError('values is not a numpy array.')
 
     ndof = theoretical_ndof(values)
-    pvalue, zvalue = significance_from_chi2_ndof(chi2, ndof)
+    p_value, z_value = significance_from_chi2_ndof(chi2, ndof)
 
-    return pvalue, zvalue
+    return p_value, z_value
 
 
 def significance_from_chi2_MC(chi2:float, values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
-                              simulation_method:str='multinominal', chi2s=None) -> Union[float,float]:
+                              simulation_method:str='multinominal', chi2s=None) -> Tuple[float,float]:
     """
     Convert a chi2 into significance using knowledge about the shape of the chi2 distribution of simulated data
 
@@ -140,24 +139,20 @@ def significance_from_chi2_MC(chi2:float, values:np.ndarray, nsim:int=1000, lamb
     :param list chi2s: provide your own chi2s values (optional)
     :returns: pvalue, significance
     """
-    if not isinstance(values, np.ndarray):
-        raise TypeError('values is not a numpy array.')
-    if not isinstance(chi2s, (np.ndarray, list, tuple, type(None))):
-        raise TypeError('chi2s is not an array.')
 
     # determine effective number of degrees of freedom using simulation
     if chi2s is None:
         chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method)
 
-    # calculate pvalue based on simulation (MC method)
-    pexp = 1. - stats.percentileofscore(chi2s, chi2) / 100.
-    zexp = -stats.norm.ppf(pexp)
+    # calculate p_value based on simulation (MC method)
+    empirical_p_value = 1. - stats.percentileofscore(chi2s, chi2) / 100.
+    empirical_z_value = -stats.norm.ppf(empirical_p_value)
 
-    return pexp, zexp
+    return empirical_p_value, empirical_z_value
 
 
 def significance_from_chi2_hybrid(chi2:float, values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
-                                  simulation_method:str='multinominal', chi2s=None) -> Union[float,float]:
+                                  simulation_method:str='multinominal', chi2s=None) -> Tuple[float,float]:
     """
     Convert a chi2 into significance using a hybrid method
 
@@ -174,12 +169,8 @@ def significance_from_chi2_hybrid(chi2:float, values:np.ndarray, nsim:int=1000, 
     :param float chi2: chi2 value
     :param list chi2s: provide your own chi2s values (optional)
     :param float avg_per_bin: average number of data points per bin
-    :returns: pvalue, significance
+    :returns: p_value, significance
     """
-    if not isinstance(values, np.ndarray):
-        raise TypeError('values is not a numpy array.')
-    if not isinstance(chi2s, (np.ndarray, list, tuple, type(None))):
-        raise TypeError('chi2s is not an array.')
 
     # determine effective number of degrees of freedom using simulation
     if chi2s is None:
@@ -210,7 +201,7 @@ def significance_from_chi2_hybrid(chi2:float, values:np.ndarray, nsim:int=1000, 
 
 
 def significance_from_hist2d(values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal',
-                             significance_method:str='hybrid') -> Union[float,float]:
+                             significance_method:str='hybrid') -> Tuple[float,float]:
     """
     Calculate the significance of correlation of two variables based on the contingency table
 
@@ -222,26 +213,26 @@ def significance_from_hist2d(values:np.ndarray, nsim:int=1000, lambda_:str='log-
     :param str significance_method: significance_method. Options: [asymptotic, MC, hybrid]
     :return: pvalue, significance
     """
-    if not isinstance(values, np.ndarray):
-        raise TypeError('values is not a numpy array.')
 
     # chi2 of the data
     chi2 = get_chi2_using_dependent_frequency_estimates(values, lambda_=lambda_)
 
     if significance_method == 'asymptotic':
         # calculate pvalue and zvalue based on chi2 and ndof (asymptotic method)
-        pvalue, zvalue = significance_from_chi2_asymptotic(values, chi2)
-
+        pvalue, zvalue = significance_from_chi2_asymptotic(
+            values, chi2
+        )
     elif significance_method == 'MC':
         # calculate pvalue based on simulation (MC method)
-        pvalue, zvalue = significance_from_chi2_MC(chi2, values, nsim=nsim, lambda_=lambda_,
-                                                   simulation_method=simulation_method)
-
+        pvalue, zvalue = significance_from_chi2_MC(
+            chi2, values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method
+        )
     elif significance_method == 'hybrid':
         # low statistics : calculate pvalue and zvalue using h(x|f) and endof
         # high statistics: calculate pvalue and zvalue using chi2-distribution and endof
-        pvalue, zvalue = significance_from_chi2_hybrid(chi2, values, nsim=nsim, lambda_=lambda_,
-                                                       simulation_method=simulation_method)
+        pvalue, zvalue = significance_from_chi2_hybrid(
+            chi2, values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method
+        )
     else:
         raise NotImplementedError('simulation_method {0:s} is unknown'.format(simulation_method))
 
@@ -252,9 +243,9 @@ def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-lik
                                   nsim:int=1000, significance_method:str='hybrid', dropna:bool=True, drop_underflow:bool=True,
                                   drop_overflow:bool=True) -> pd.DataFrame:
     """
-    Calculate significance of correlation of all variable combinations in the dataframe
+    Calculate significance of correlation of all variable combinations in the DataFrame
 
-    :param data_binned: input binned dataframe
+    :param data_binned: input binned DataFrame
     :param int nsim: number of simulations
     :param str lambda_: test statistic. Available options are [pearson, log-likelihood]
     :param str simulation_method: simulation method. Options: [mutlinominal, row_product_multinominal, \
@@ -267,43 +258,50 @@ def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-lik
     a numeric variable)
     :return: significance matrix
     """
-    if not isinstance(data_binned, pd.DataFrame):
-        raise TypeError('data_binned is not a pandas DataFrame.')
 
     if not dropna:
         # if not dropna replace the NaN values with the string NaN. Otherwise the rows with NaN are dropped
         # by the groupby.
-        data_binned = data_binned.replace(np.nan, defs.NaN).copy()
-
+        data_binned.replace(np.nan, defs.NaN, inplace=True)
     if drop_underflow:
-        data_binned = data_binned.replace(defs.UF, np.nan).copy()
+        data_binned.replace(defs.UF, np.nan, inplace=True)
     if drop_overflow:
-        data_binned = data_binned.replace(defs.OF, np.nan).copy()
+        data_binned.replace(defs.OF, np.nan, inplace=True)
 
-    signifs = {}
-    for i, comb in enumerate(itertools.combinations_with_replacement(data_binned.columns.values, 2)):
-        c0, c1 = comb
+    # cache column order (https://github.com/KaveIO/PhiK/issues/1)
+    column_order = data_binned.columns
+    signifs = []
+    for i, (c0, c1) in enumerate(itertools.combinations_with_replacement(data_binned.columns.values, 2)):
         datahist = data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
         if 1 in datahist.shape or 0 in datahist.shape:
-            signifs[':'.join(comb)] = np.nan
+            signifs.append((c0, c1, np.nan))
             warnings.warn('Too few unique values for variable {0:s} ({1:d}) or {2:s} ({3:d}) to calculate significance'
                 .format(c0, datahist.shape[0], c1, datahist.shape[1]))
             continue
 
         datahist.columns = datahist.columns.droplevel()
         datahist = datahist.values
-        pvalue, zvalue = significance_from_hist2d(datahist, nsim=nsim, lambda_=lambda_,
-                                                  simulation_method=simulation_method,
-                                                  significance_method=significance_method)
-        signifs[':'.join(comb)] = zvalue
+        pvalue, zvalue = significance_from_hist2d(
+            datahist, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method,
+            significance_method=significance_method
+        )
+        signifs.append((c0, c1, zvalue))
+
+    if len(signifs) == 0:
+        return pd.DataFrame(np.nan, index=column_order, columns=column_order)
 
     significance_overview = create_correlation_overview_table(signifs)
+
+    # restore column order
+    significance_overview = significance_overview.reindex(columns=column_order)
+    significance_overview = significance_overview.reindex(index=column_order)
+
     return significance_overview
 
 
 def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="log-likelihood", simulation_method:str='multinominal',
-                        nsim:int=1000, significance_method:str='hybrid', bins=10, dropna:bool=True, drop_underflow:bool=True,
-                        drop_overflow:bool=True) -> pd.DataFrame:
+                        nsim:int=1000, significance_method:str='hybrid', bins:Union[int, list, np.ndarray, dict]=10, dropna:bool=True,
+                        drop_underflow:bool=True, drop_overflow:bool=True) -> pd.DataFrame:
     """
     Calculate significance of correlation of all variable combinations in the dataframe
 
@@ -325,28 +323,24 @@ def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="l
     a numeric variable)
     :return: significance matrix
     """
-    if not isinstance(df, pd.DataFrame):
-        raise TypeError('df is not a pandas DataFrame.')
-    if not isinstance(bins, (int,list,np.ndarray,dict)):
-        raise TypeError('bins is of incorrect type.')    
 
-    if isinstance( interval_cols, type(None) ):
-        interval_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-        if interval_cols:
-            print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
-    assert isinstance(interval_cols, list), 'interval_cols is not a list.'
+    if interval_cols is None:
+        interval_cols = guess_interval_cols(df)
 
     df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
     data_binned = bin_data(df_clean, interval_cols_clean, bins=bins)
-    return significance_from_rebinned_df(data_binned, lambda_=lambda_, simulation_method=simulation_method, nsim=nsim,
-                                         significance_method=significance_method, dropna=dropna,
-                                         drop_underflow=drop_underflow, drop_overflow=drop_overflow)
+    return significance_from_rebinned_df(
+        data_binned, lambda_=lambda_, simulation_method=simulation_method, nsim=nsim,
+        significance_method=significance_method, dropna=dropna,
+        drop_underflow=drop_underflow, drop_overflow=drop_overflow
+    )
 
 
-def significance_from_array(x, y, num_vars:list=[], bins=10, quantile:bool=False, lambda_:str="log-likelihood", nsim:int=1000,
+def significance_from_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Series], num_vars=None, bins:Union[int,list,np.ndarray,dict]=10,
+                            quantile:bool=False, lambda_:str= "log-likelihood", nsim:int=1000,
                             significance_method:str='hybrid', simulation_method:str='multinominal', dropna:bool=True,
-                            drop_underflow:bool=True, drop_overflow:bool=True) -> Union[float,float]:
+                            drop_underflow:bool=True, drop_overflow:bool=True) -> Tuple[float,float]:
     """
     Calculate the significance of correlation
 
@@ -371,28 +365,24 @@ def significance_from_array(x, y, num_vars:list=[], bins=10, quantile:bool=False
     a numeric variable)
     :return: p-value, significance
     """
-    if not isinstance(x, (np.ndarray, pd.Series)):
-        raise TypeError('x is not array like.')
-    if not isinstance(y, (np.ndarray, pd.Series)):
-        raise TypeError('y is not array like.')
-    if not isinstance(bins, (int,list,np.ndarray,dict)):
-        raise TypeError('bins is of incorrect type.')    
-
-    if isinstance(num_vars, str):
+    if num_vars is None:
+        num_vars = []
+    elif isinstance(num_vars, str):
         num_vars = [num_vars]
 
     if len(num_vars) > 0:
-        df = pd.DataFrame(np.array([x, y]).T, columns=['x', 'y'])
+        df = array_like_to_dataframe(x, y)
         x, y = bin_data(df, num_vars, bins=bins, quantile=quantile).T.values
 
-    return significance_from_binned_array(x, y, lambda_=lambda_, significance_method=significance_method, nsim=nsim,
-                                          simulation_method=simulation_method, dropna=dropna,
-                                          drop_underflow=drop_underflow, drop_overflow=drop_overflow)
+    return significance_from_binned_array(
+        x, y, lambda_=lambda_, significance_method=significance_method, nsim=nsim,
+        simulation_method=simulation_method, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow
+    )
 
 
-def significance_from_binned_array(x, y, lambda_:str="log-likelihood", significance_method:str='hybrid', nsim:int=1000,
+def significance_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Series], lambda_:str="log-likelihood", significance_method:str='hybrid', nsim:int=1000,
                                    simulation_method:str='multinominal', dropna:bool=True, drop_underflow:bool=True,
-                                   drop_overflow:bool=True) -> Union[float,float]:
+                                   drop_overflow:bool=True) -> Tuple[float, float]:
     """
     Calculate the significance of correlation
 
@@ -413,10 +403,6 @@ def significance_from_binned_array(x, y, lambda_:str="log-likelihood", significa
     a numeric variable)
     :return: p-value, significance
     """
-    if not isinstance(x, (np.ndarray, pd.Series)):
-        raise TypeError('x is not array like.')
-    if not isinstance(y, (np.ndarray, pd.Series)):
-        raise TypeError('y is not array like.')
 
     if not dropna:
         x = pd.Series(x).fillna(defs.NaN).astype(str).values
@@ -425,17 +411,18 @@ def significance_from_binned_array(x, y, lambda_:str="log-likelihood", significa
     if drop_underflow or drop_overflow:
         x = x.copy()
         y = y.copy()
-    if drop_underflow:
-        x[np.where(x == defs.UF)] = np.nan
-        x[np.where(x == defs.OF)] = np.nan
-    if drop_overflow:
-        y[np.where(y == defs.UF)] = np.nan
-        y[np.where(y == defs.OF)] = np.nan
+        if drop_underflow:
+            x[np.where(x == defs.UF)] = np.nan
+            y[np.where(y == defs.UF)] = np.nan
+        if drop_overflow:
+            y[np.where(y == defs.OF)] = np.nan
+            x[np.where(x == defs.OF)] = np.nan
 
     hist2d = pd.crosstab(x, y).values
 
     if not dq_check_hist2d(hist2d):
         return np.nan, np.nan
 
-    return significance_from_hist2d(hist2d, lambda_=lambda_, significance_method=significance_method,
-                                    simulation_method=simulation_method, nsim=nsim)
+    return significance_from_hist2d(
+        hist2d, lambda_=lambda_, significance_method=significance_method, simulation_method=simulation_method, nsim=nsim
+    )

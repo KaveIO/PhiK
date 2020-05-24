@@ -14,7 +14,8 @@ LICENSE.
 """
 import numpy as np
 from scipy.special import gammaln
-from typing import Union
+from typing import Tuple
+
 
 def contfractbeta(a: float, b: float, x: float, ITMAX: int = 5000, EPS:float = 1.0e-7) -> float:
     """Continued fraction form of the incomplete Beta function.
@@ -58,7 +59,6 @@ def contfractbeta(a: float, b: float, x: float, ITMAX: int = 5000, EPS:float = 1
             return az
          
     raise ValueError('a={0:f} or b={1:f} too large, or ITMAX={2:d} too small to compute incomplete beta function.'.format(a,b,ITMAX))
-    return 0
 
 
 def incompbeta(a: float, b: float, x: float) -> float:
@@ -79,20 +79,20 @@ def incompbeta(a: float, b: float, x: float) -> float:
     :rtype: float
     ''' 
     # special cases
-    if (x == 0):
-        return 0;
-    elif (x == 1):
-        return 1;
+    if x == 0:
+        return 0
+    elif x == 1:
+        return 1
     # default
     lbeta = gammaln(a+b) - gammaln(a) - gammaln(b) + a * np.log(x) + b * np.log(1-x)
-    if (x < (a+1) / (a+b+2)):
+    if x < (a + 1) / (a + b + 2):
         p = np.exp(lbeta) * contfractbeta(a, b, x) / a
     else:
         p = 1 - np.exp(lbeta) * contfractbeta(b, a, 1-x) / b
     return p
 
 
-def log_incompbeta(a: float, b: float, x: float) -> Union[float,float]: 
+def log_incompbeta(a: float, b: float, x: float) -> Tuple[float,float]:
     '''Evaluation of logarithm of incomplete beta function
 
     Logarithm of incomplete beta function is implemented to ensure sufficient precision
@@ -113,19 +113,19 @@ def log_incompbeta(a: float, b: float, x: float) -> Union[float,float]:
     :rtype: tuple
     '''
     # special cases
-    if (x == 0):
-        return (-np.inf, 0)
-    elif (x == 1):
-        return (0, -np.inf)
+    if x == 0:
+        return -np.inf, 0
+    elif x == 1:
+        return 0, -np.inf
     # default
     lbeta = gammaln(a+b) - gammaln(a) - gammaln(b) + a * np.log(x) + b * np.log(1-x)
 
-    if (x < (a+1) / (a+b+2)):
+    if x < (a + 1) / (a + b + 2):
         p = np.exp(lbeta) * contfractbeta(a, b, x) / a
         logp = lbeta + np.log(contfractbeta(a, b, x)) - np.log(a)
         logq = np.log(1-p)
     else:
-        p = 1 - np.exp(lbeta) * ( contfractbeta(b, a, 1-x) / b )
+        p = 1 - np.exp(lbeta) * (contfractbeta(b, a, 1-x) / b)
         logp = np.log(p)
         logq = lbeta + np.log(contfractbeta(b, a, 1-x)) - np.log(b)
-    return (logp, logq)
+    return logp, logq

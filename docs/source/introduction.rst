@@ -31,7 +31,7 @@ The ``PhiK`` correlation analyzer library contains several useful functions to h
 * Visualizing the dependency between variables can be tricky, especially when dealing with (unordered) categorical variables. 
   To help interpret any variable relationship found, we provide a method for the detection of
   significant excesses or deficits of records with respect to the expected values in a contingency table, so-called outliers,
-  using a statistically independent evaluation for expected frequency of records, accouncting for the uncertainty on the expectation.
+  using a statistically independent evaluation for expected frequency of records, accounting for the uncertainty on the expectation.
   We evaluate the significance of each outlier frequency in a table, and normalize and visualize these accordingly.
   The resulting plots we find to be very valuable to help interpret variable dependencies,
   and work alike for interval, ordinal and categorical variables.

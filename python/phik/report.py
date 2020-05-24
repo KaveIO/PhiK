@@ -12,7 +12,7 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted according to the terms listed in the file
 LICENSE.
 """
-from typing import Union
+from typing import Tuple, Union, Callable, Dict
 
 import os
 import itertools
@@ -28,10 +28,11 @@ from .phik import phik_from_rebinned_df, global_phik_from_rebinned_df
 from .significance import significance_from_rebinned_df
 from .outliers import outlier_significance_matrix_from_rebinned_df
 from .data_quality import dq_check_nunique_values
+from .utils import guess_interval_cols
 
 
-def plot_hist_and_func(data, func, funcparams, xbins=False, labels=['',''], xlabel='', ylabel='', title='',
-                       xlimit=None, alpha=1):
+def plot_hist_and_func(data: Union[list, np.ndarray, pd.Series], func: Callable, funcparams, xbins=False, labels=None,
+                       xlabel='', ylabel='', title='', xlimit=None, alpha=1):
     """
     Create a histogram of the provided data and overlay with a function.
 
@@ -47,8 +48,8 @@ def plot_hist_and_func(data, func, funcparams, xbins=False, labels=['',''], xlab
     :param alpha: alpha histogram
     :return:
     """
-    if not isinstance(data, (list, np.ndarray, pd.Series)):
-        raise TypeError('data is not array like.')
+    if labels is None:
+        labels = ['', '']
 
     # If binning is not specified, create binning here
     if not np.any(xbins) and not xlimit:
@@ -147,7 +148,7 @@ def plot_correlation_matrix(matrix_colors:np.ndarray, x_labels:list, y_labels:li
         return lab
 
     # reduce default fontsizes in case too many labels?
-    nlabs = max(len(y_labels), len(x_labels))
+    # nlabs = max(len(y_labels), len(x_labels))
 
     # axis ticks and tick labels
     if len(x_labels) == matrix_colors.shape[1] + 1:
@@ -221,7 +222,7 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
                        noise_correction:bool=True, store_each_plot:bool=False,
                        lambda_significance:str="log-likelihood",
                        simulation_method:str='multinominal', nsim_chi2:int=1000,
-                       significance_method:str='asymptotic', CI_method:str='poisson') -> Union[pd.DataFrame, pd.DataFrame, dict, dict]:
+                       significance_method:str='asymptotic', CI_method:str='poisson') -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, str]]:
     """
     Create a correlation report for the given dataset.
 
@@ -254,16 +255,11 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
     :returns: phik_matrix (pd.DataFrame), global_phik (np.array), significance_matrix (pd.DataFrame), \
     outliers_overview (dictionary), output_files (dictionary)
     """
-    if not isinstance(data, pd.DataFrame):
-        raise TypeError('df is not a pandas DataFrame.')
 
-    if isinstance( interval_cols, type(None) ):
-        interval_cols = data.select_dtypes(include=[np.number]).columns.tolist()
-        if interval_cols:
-            print('interval_cols not set, guessing: {0:s}'.format(str(interval_cols)))
-    assert isinstance( interval_cols, list ), 'interval_cols is not a list.'
+    if interval_cols is None:
+        interval_cols = guess_interval_cols(data)
 
-    data_clean, interval_cols_clean = dq_check_nunique_values(data, interval_cols, dropna=True)
+    data_clean, interval_cols_clean = dq_check_nunique_values(data, interval_cols)
 
     # create pdf(s) to save plots
     output_files = dict()
@@ -326,7 +322,7 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
                phik_matrix.loc[c0, c1] < correlation_threshold:
                 continue
 
-            zvalues_df = outlier_significance_matrix_from_rebinned_df(data_binned[[c0, c1]], binning_dict, CI_method=CI_method)
+            zvalues_df = outlier_significance_matrix_from_rebinned_df(data_binned[[c0, c1]].copy(), binning_dict, CI_method=CI_method)
 
             combi = ':'.join(comb).replace(' ','_')
             xlabels = zvalues_df.columns

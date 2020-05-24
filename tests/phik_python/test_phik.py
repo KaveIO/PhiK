@@ -43,13 +43,16 @@ class PhiKTest(unittest.TestCase):
 
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
+        cols = list(df.columns)
 
         # get the phi_k correlation matrix between all variables
         interval_cols = ['driver_age', 'mileage']
         phik_corr = df.phik_matrix(interval_cols=interval_cols)
 
-        self.assertTrue(np.isclose(phik_corr.values[1,0], 0.5904561614620166))
-        self.assertTrue(np.isclose(phik_corr.values[2,4], 0.768588987856336))
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('car_color'), cols.index('area')], 0.5904561614620166))
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('area'), cols.index('car_color')], 0.5904561614620166))
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('mileage'), cols.index('car_size')], 0.768588987856336))
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('car_size'), cols.index('mileage')], 0.768588987856336))
 
     def test_global_phik(self):
         """Test the calculation of global Phi_K values"""
@@ -65,8 +68,13 @@ class PhiKTest(unittest.TestCase):
         interval_cols = ['driver_age', 'mileage']
         gk = df.global_phik(interval_cols=interval_cols)
 
-        self.assertTrue(np.isclose(gk[0][0][0], 0.6057528003711345))
-        self.assertTrue(np.isclose(gk[0][4][0], 0.768588987856336))
+        area = (np.where(gk[1] == 'area'))[0][0]
+        car_size = (np.where(gk[1] == 'car_size'))[0][0]
+        mileage = (np.where(gk[1] == 'mileage'))[0][0]
+
+        self.assertTrue(np.isclose(gk[0][area][0], 0.6057528003711345))
+        self.assertTrue(np.isclose(gk[0][car_size][0], 0.76858883))
+        self.assertTrue(np.isclose(gk[0][mileage][0], 0.768588987856336))
 
     def test_significance_matrix(self):
         """Test significance calculation"""
@@ -77,13 +85,15 @@ class PhiKTest(unittest.TestCase):
 
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
-
+        cols = list(df.columns)
         # get significances
         interval_cols = ['driver_age', 'mileage']
         sm = df.significance_matrix(interval_cols=interval_cols, significance_method='asymptotic')
 
-        self.assertTrue(np.isclose(sm.values[1,0], 37.66184429195198))
-        self.assertTrue(np.isclose(sm.values[2,4], 49.3323049685695))
+        self.assertTrue(np.isclose(sm.values[cols.index('car_color'), cols.index('area')], 37.66184429195198))
+        self.assertTrue(np.isclose(sm.values[cols.index('area'), cols.index('car_color')], 37.66184429195198))
+        self.assertTrue(np.isclose(sm.values[cols.index('mileage'), cols.index('car_size')], 49.3323049685695))
+        self.assertTrue(np.isclose(sm.values[cols.index('car_size'), cols.index('mileage')], 49.3323049685695))
 
     def test_hist2d(self):
         """Test the calculation of global Phi_K values"""
@@ -102,6 +112,21 @@ class PhiKTest(unittest.TestCase):
         self.assertEqual(h2d.values[1,1], 10)
         self.assertEqual(h2d.values[5,5], 217)
 
+    def test_hist2d_array(self):
+        """Test the calculation of global Phi_K values"""
+
+        import pandas as pd
+        from phik import resources
+
+        # open fake car insurance data
+        df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
+
+        # create contingency matrix
+        interval_cols = ['mileage']
+        h2d = df['mileage'].hist2d(df['car_size'], interval_cols=interval_cols)
+        self.assertEqual(h2d.values[1, 1], 10)
+        self.assertEqual(h2d.values[5, 5], 217)
+
     def test_outlier_significance_matrix(self):
         """Test the calculation of outlier significances"""
 
@@ -119,3 +144,18 @@ class PhiKTest(unittest.TestCase):
 
         self.assertTrue(np.isclose(om.values[0,1], 21.483476494343552))
         self.assertTrue(np.isclose(om.values[2,4], -1.246784034214704))
+
+    def test_outlier_significance_matrices(self):
+        """Test the calculation of outlier significances"""
+
+        import pandas as pd
+        from phik import resources
+
+        # open fake car insurance data
+        df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
+
+        # calculate outlier significances
+        interval_cols = ['mileage', 'driver_age']
+        om = df.outlier_significance_matrices(interval_cols=interval_cols)
+
+        self.assertTrue(isinstance(om, dict))
