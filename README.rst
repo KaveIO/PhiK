@@ -104,7 +104,6 @@ For all available examples, please see the `tutorials <https://phik.readthedocs.
 Contact and support
 ===================
 
-* Issues & Ideas: https://github.com/kaveio/phik/issues
-* Q&A Support: contact us at: kave [at] kpmg [dot] com
+* Issues and Ideas: https://github.com/kaveio/phik/issues
 
 Please note that KPMG provides support only on a best-effort basis.
