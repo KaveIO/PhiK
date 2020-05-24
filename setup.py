@@ -55,8 +55,9 @@ COMMAND_OPTIONS = dict()
 EXCLUDE_PACKAGES = []
 EXTERNAL_MODULES = []
 
-with open("README.rst") as fh:
-    long_description = fh.read()
+# read the contents of readme file
+with open("README.rst", encoding="utf-8") as f:
+    long_description = f.read()
 
 
 def write_version_py(filename: str = 'python/phik/version.py') -> None:
@@ -97,10 +98,12 @@ def setup_package() -> None:
     setup(name=NAME,
           version=FULL_VERSION,
           url='http://phik.rtfd.io',
-          license='',
+          license='Apache-2',
           author='KPMG N.V. The Netherlands',
           author_email='kave@kpmg.com',
           description="Phi_K correlation analyzer library",
+          long_description=long_description,
+          long_description_content_type="text/x-rst",
           python_requires='>=3.5',
           package_dir={'': 'python'},
           packages=find_packages(where='python', exclude=EXCLUDE_PACKAGES),
