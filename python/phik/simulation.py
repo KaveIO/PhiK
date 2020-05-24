@@ -290,8 +290,8 @@ def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
 
 
 # @jit
-def sim_chi2_distribution(values: Union[pd.DataFrame, np.ndarray], nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal'
-                          alt_hypothesis:bool=False) -> list:
+def sim_chi2_distribution(values: Union[pd.DataFrame, np.ndarray], nsim:int=1000, lambda_:str='log-likelihood',
+                          simulation_method:str='multinominal', alt_hypothesis:bool=False) -> list:
     """
     Simulate 2D data and calculate the chi-square statistic for each simulated dataset.
 
@@ -305,7 +305,7 @@ def sim_chi2_distribution(values: Union[pd.DataFrame, np.ndarray], nsim:int=1000
     """
     values = values.values if isinstance(values, pd.DataFrame) else values
 
-    exp_dep = get_dependent_frequency_estimates(vals) if not alt_hypothesis else vals
+    exp_dep = get_dependent_frequency_estimates(values) if not alt_hypothesis else values
 
     from phik.config import ncores as NCORES
     chi2s = Parallel(n_jobs=NCORES)(delayed(_simulate_and_fit)(exp_dep, simulation_method, lambda_) for i in range(nsim))
