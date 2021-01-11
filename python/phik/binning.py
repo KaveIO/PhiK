@@ -179,7 +179,7 @@ def hist2d_from_rebinned_df(data_binned:pd.DataFrame, dropna:bool=True, drop_und
 def hist2d(df: pd.DataFrame, interval_cols:Optional[Union[list, np.ndarray]]=None,
            bins:Union[int,float,list,np.ndarray,dict]=10,
            quantile:bool=False, dropna:bool=True, drop_underflow:bool=True,
-           drop_overflow:bool=True, retbins:bool=False) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
+           drop_overflow:bool=True, retbins:bool=False, verbose:bool=True) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
     """
     Give binned 2d DataFrame of two columns of input DataFrame
 
@@ -193,6 +193,7 @@ def hist2d(df: pd.DataFrame, interval_cols:Optional[Union[list, np.ndarray]]=Non
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
+    :param bool verbose: if False, do not print all interval columns that are guessed
     :returns: histogram DataFrame
     """
 
@@ -200,7 +201,7 @@ def hist2d(df: pd.DataFrame, interval_cols:Optional[Union[list, np.ndarray]]=Non
         raise ValueError('DataFrame should contain only two columns')
 
     if interval_cols is None:
-        interval_cols = guess_interval_cols(df)
+        interval_cols = guess_interval_cols(df, verbose)
 
     data_binned, binning_dict = bin_data(df, interval_cols, retbins=True, bins=bins, quantile=quantile)
     datahist = hist2d_from_rebinned_df(

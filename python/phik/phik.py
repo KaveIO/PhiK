@@ -182,7 +182,8 @@ def _calc_phik(comb: tuple, data_binned: pd.DataFrame, noise_correction: bool) -
 
 
 def phik_matrix(df:pd.DataFrame, interval_cols:Optional[list]=None, bins:Union[int,list,np.ndarray,dict]=10, quantile:bool=False,
-                noise_correction:bool=True, dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True) -> pd.DataFrame:
+                noise_correction:bool=True, dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True,
+                verbose:bool=True) -> pd.DataFrame:
     """
     Correlation matrix of bivariate gaussian derived from chi2-value
 
@@ -203,11 +204,12 @@ def phik_matrix(df:pd.DataFrame, interval_cols:Optional[list]=None, bins:Union[i
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
+    :param bool verbose: if False, do not print all interval columns that are guessed
     :return: phik correlation matrix
     """
 
     if interval_cols is None:
-        interval_cols = guess_interval_cols(df)
+        interval_cols = guess_interval_cols(df, verbose)
 
     df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
@@ -250,7 +252,8 @@ def global_phik_from_rebinned_df(data_binned:pd.DataFrame, noise_correction:bool
 
 
 def global_phik_array(df:pd.DataFrame, interval_cols:list=None, bins:Union[int,list,np.ndarray,dict]=10, quantile:bool=False,
-                      noise_correction:bool=True, dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True) ->  Tuple[np.ndarray, np.ndarray]:
+                      noise_correction:bool=True, dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True,
+                      verbose:bool=True) -> Tuple[np.ndarray, np.ndarray]:
     """
     Global correlation values of bivariate gaussian derived from chi2-value
 
@@ -271,11 +274,12 @@ def global_phik_array(df:pd.DataFrame, interval_cols:list=None, bins:Union[int,l
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
+    :param bool verbose: if False, do not print all interval columns that are guessed
     :return: global correlations array
     """
 
     if interval_cols is None:
-        interval_cols = guess_interval_cols(df)
+        interval_cols = guess_interval_cols(df, verbose)
 
     df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 

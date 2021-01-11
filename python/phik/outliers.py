@@ -430,7 +430,8 @@ def outlier_significance_matrix_from_rebinned_df(data_binned:pd.DataFrame, binni
 
 def outlier_significance_matrix(df: pd.DataFrame, interval_cols:Optional[list]=None, CI_method:str='poisson',
                                 ndecimals:int=1, bins=10, quantile:bool=False, dropna:bool=True,
-                                drop_underflow:bool=True, drop_overflow:bool=True, retbins:bool=False):
+                                drop_underflow:bool=True, drop_overflow:bool=True, retbins:bool=False,
+                                verbose:bool=True):
     """
     Calculate the significance matrix of excesses or deficits
 
@@ -448,6 +449,7 @@ def outlier_significance_matrix(df: pd.DataFrame, interval_cols:Optional[list]=N
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
     :param bool retbins: if true, function also returns dict with bin_edges of rebinned variables.
+    :param bool verbose: if False, do not print all interval columns that are guessed
     :return: outlier significance matrix (pd.DataFrame)
     """
 
@@ -455,7 +457,7 @@ def outlier_significance_matrix(df: pd.DataFrame, interval_cols:Optional[list]=N
         raise ValueError('df should contain only two columns')
 
     if interval_cols is None:
-        interval_cols = guess_interval_cols(df)
+        interval_cols = guess_interval_cols(df, verbose)
 
     df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
@@ -472,8 +474,8 @@ def outlier_significance_matrix(df: pd.DataFrame, interval_cols:Optional[list]=N
 
 
 def outlier_significance_matrices_from_rebinned_df(data_binned: pd.DataFrame, binning_dict=None, CI_method='poisson',
-                                                   ndecimals=1, combinations:Union[list, tuple]=(), dropna=True, drop_underflow=True,
-                                                   drop_overflow=True):
+                                                   ndecimals=1, combinations:Union[list, tuple]=(), dropna=True,
+                                                   drop_underflow=True, drop_overflow=True):
     """
     Calculate the significance matrix of excesses or deficits for all possible combinations of variables, or for
     those combinations specified using combinations. This functions could also be used instead of
@@ -515,7 +517,8 @@ a numeric variable)
 
 def outlier_significance_matrices(df: pd.DataFrame, interval_cols:Optional[list]=None, CI_method:str='poisson', ndecimals:int=1,
                                   bins=10, quantile:bool=False, combinations:Union[list, tuple]=(),
-                                  dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True, retbins:bool=False):
+                                  dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True,
+                                  retbins:bool=False, verbose:bool=True):
     """
     Calculate the significance matrix of excesses or deficits for all possible combinations of variables, or for
     those combinations specified using combinations
@@ -537,11 +540,12 @@ def outlier_significance_matrices(df: pd.DataFrame, interval_cols:Optional[list]
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
     :param bool retbins: if true, function also returns dict with bin_edges of rebinned variables.
+    :param bool verbose: if False, do not print all interval columns that are guessed
     :return: dictionary with outlier significance matrices (pd.DataFrame)
     """
 
     if interval_cols is None:
-        interval_cols = guess_interval_cols(df)
+        interval_cols = guess_interval_cols(df, verbose)
 
     df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
@@ -563,7 +567,8 @@ def outlier_significance_matrices(df: pd.DataFrame, interval_cols:Optional[list]
 def outlier_significance_from_array(x: Union[np.ndarray, list, pd.Series], y: Union[np.ndarray, list, pd.Series],
                                     num_vars:list=None, bins:Union[int,list,np.ndarray,dict]=10, quantile:bool=False,
                                     ndecimals:int=1, CI_method:str='poisson', dropna:bool=True,
-                                    drop_underflow:bool=True, drop_overflow:bool=True) -> pd.DataFrame:
+                                    drop_underflow:bool=True, drop_overflow:bool=True,
+                                    verbose:bool=True) -> pd.DataFrame:
     """
     Calculate the significance matrix of excesses or deficits of input x and input y. x and y can contain interval, \
     ordinal or categorical data. Use the num_vars variable to indicate whether x and/or y contain interval data.
@@ -582,17 +587,18 @@ def outlier_significance_from_array(x: Union[np.ndarray, list, pd.Series], y: Un
     numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True \
     (relevant when binning a numeric variable)
+    :param bool verbose: if False, do not print all interval columns that are guessed
     :return: outlier significance matrix (pd.DataFrame)
     """
 
     df = array_like_to_dataframe(x, y)
 
     if num_vars is None:
-        num_vars = guess_interval_cols(df)
+        num_vars = guess_interval_cols(df, verbose)
 
     return outlier_significance_matrix(
-        df, interval_cols=num_vars, bins=bins, quantile=quantile, ndecimals=ndecimals,
-        CI_method=CI_method, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow
+        df, interval_cols=num_vars, bins=bins, quantile=quantile, ndecimals=ndecimals, CI_method=CI_method,
+        dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow, verbose=verbose
     )
 
 

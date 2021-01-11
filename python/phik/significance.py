@@ -301,7 +301,7 @@ def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-lik
 
 def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="log-likelihood", simulation_method:str='multinominal',
                         nsim:int=1000, significance_method:str='hybrid', bins:Union[int, list, np.ndarray, dict]=10, dropna:bool=True,
-                        drop_underflow:bool=True, drop_overflow:bool=True) -> pd.DataFrame:
+                        drop_underflow:bool=True, drop_overflow:bool=True, verbose:bool=True) -> pd.DataFrame:
     """
     Calculate significance of correlation of all variable combinations in the dataframe
 
@@ -321,11 +321,12 @@ def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="l
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
+    :param bool verbose: if False, do not print all interval columns that are guessed
     :return: significance matrix
     """
 
     if interval_cols is None:
-        interval_cols = guess_interval_cols(df)
+        interval_cols = guess_interval_cols(df, verbose)
 
     df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 

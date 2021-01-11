@@ -222,7 +222,8 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
                        noise_correction:bool=True, store_each_plot:bool=False,
                        lambda_significance:str="log-likelihood",
                        simulation_method:str='multinominal', nsim_chi2:int=1000,
-                       significance_method:str='asymptotic', CI_method:str='poisson') -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, str]]:
+                       significance_method:str='asymptotic', CI_method:str='poisson',
+                       verbose:bool=True) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, str]]:
     """
     Create a correlation report for the given dataset.
 
@@ -252,12 +253,13 @@ def correlation_report(data:pd.DataFrame, interval_cols:list=None, bins=10, quan
     :param significance_method: method for significance calculation. Options: [asymptotic, MC, hybrid]
     :param CI_method: method for uncertainty calculation for outlier significance calculation. Options: [poisson, \
     exact_poisson]
+    :param bool verbose: if False, do not print all interval columns that are guessed
     :returns: phik_matrix (pd.DataFrame), global_phik (np.array), significance_matrix (pd.DataFrame), \
     outliers_overview (dictionary), output_files (dictionary)
     """
 
     if interval_cols is None:
-        interval_cols = guess_interval_cols(data)
+        interval_cols = guess_interval_cols(data, verbose)
 
     data_clean, interval_cols_clean = dq_check_nunique_values(data, interval_cols)
 
