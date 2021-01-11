@@ -19,7 +19,7 @@ from setuptools import setup
 NAME = 'phik'
 
 MAJOR = 0
-REVISION = 10
+REVISION = 11
 PATCH = 0
 DEV = False
 
