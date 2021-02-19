@@ -55,6 +55,15 @@ You can now use the package in Python with:
 
 **Congratulations, you are now ready to use the PhiK correlation analyzer library!**
 
+Speedups
+--------
+
+Phi_K can use the Numba JIT library for faster computation of certain operations.
+You can either install Numba separately or use the `numba` extra specifier while installing:
+
+.. code-block:: bash
+
+  $ pip install phik[numba]
 
 Quick run
 =========
