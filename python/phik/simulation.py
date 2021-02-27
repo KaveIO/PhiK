@@ -17,11 +17,21 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from numba import jit
 from joblib import Parallel, delayed
 
 from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
+
+try:
+    from numba import jit
+except ImportError:
+    def jit(func=None, **kwargs):
+        if func:  # Called without other arguments, just return the function
+            return func
+        # Otherwise return a no-op decorator
+        def decorator(func):
+            return func
+        return decorator
 
 
 @jit

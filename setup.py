@@ -42,9 +42,14 @@ REQUIREMENTS = [
     'scipy>=1.1.0',
     'pandas>=0.23.4',
     'matplotlib>=2.2.3',
-    'numba>=0.38.1',
-    'joblib>=0.14.1'
+    'joblib>=0.14.1',
 ]
+
+EXTRA_REQUIREMENTS = {
+    'numba': [
+        'numba>=0.38.1',
+    ],
+}
 
 if DEV:
     REQUIREMENTS += TEST_REQUIREMENTS
@@ -114,6 +119,7 @@ def setup_package() -> None:
               NAME.lower(): ['data/*', 'notebooks/phik_tutorial*.ipynb']
           },
           install_requires=REQUIREMENTS,
+          extras_require=EXTRA_REQUIREMENTS,
           tests_require=TEST_REQUIREMENTS,
           ext_modules=EXTERNAL_MODULES,
           cmdclass=CMD_CLASS,
