@@ -7,7 +7,8 @@ Phi_K Correlation Analyzer Library
 * Repository: https://github.com/kaveio/phik
 * Publication: `[offical] <https://www.sciencedirect.com/science/article/abs/pii/S0167947320301341>`_ `[arxiv pre-print] <https://arxiv.org/abs/1811.11440>`_
 
-Phi_K is a new and practical correlation coefficient based on several refinements to Pearson's hypothesis test of independence of two variables.
+Phi_K is a practical correlation constant that works consistently between categorical, ordinal and interval variables.
+It is based on several refinements to Pearson's hypothesis test of independence of two variables.
 
 The combined features of Phi_K form an advantage over existing coefficients. First, it works consistently between categorical, ordinal and interval variables.
 Second, it captures non-linear dependency. Third, it reverts to the Pearson correlation coefficient in case of a bi-variate normal input distribution.
