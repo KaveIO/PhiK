@@ -34,7 +34,7 @@ except ImportError:
         return decorator
 
 
-@jit
+#@jit
 def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     """
     Simulate a 2 dimensional dataset given a 2 dimensional pdf
@@ -51,38 +51,10 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
         raise ValueError('ndata (or hist.sum()) has to be positive')
     
     # scale and ravel
-    hc = hist[:] * ((1.0 * ndata) / hist.sum())
+    hc = hist[:] / hist.sum()
     hcr = hc.ravel()
 
-    # first estimate, unconstrained
-    hout = np.zeros(hcr.shape)
-    for i,h in enumerate(hcr):
-        hout[i] = np.random.poisson(h)
-
-    nbins = len(hcr)
-    hmax = np.max(hcr)
-    houtsum = int(np.sum(hout))
-
-    # iterate until houtsum == ndata
-    nextra = np.abs( int(ndata) - houtsum )
-    wgt = -1 if houtsum>ndata else 1
-
-    while nextra > 0:
-        ibin = np.random.randint(0,nbins)
-        h = hcr[ibin]
-        hran = np.random.uniform(0,hmax)
-
-        if hran<h:
-            if wgt == 1:
-                hout[ibin] += 1
-            else:
-                if hout[ibin] > 0:
-                    hout[ibin] -= 1
-                else:
-                    continue
-            nextra -= 1
-
-    # reshape
+    hout = np.random.multinomial(n=ndata, pvals=hcr)
     hout2d = np.reshape(hout, hc.shape)
     return hout2d
 
