@@ -38,9 +38,9 @@ TEST_REQUIREMENTS = [
 ]
 
 REQUIREMENTS = [
-    'numpy>=1.15.4',
-    'scipy>=1.1.0',
-    'pandas>=0.23.4',
+    'numpy>=1.18.0',
+    'scipy>=1.5.2',
+    'pandas>=0.25.1',
     'matplotlib>=2.2.3',
     'joblib>=0.14.1',
 ]
