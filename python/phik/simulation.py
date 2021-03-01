@@ -82,11 +82,11 @@ def sim_2d_data_patefield(data: np.ndarray) -> np.ndarray:
     nrowt = np.rint(data.sum(axis=1)).astype(np.int32)
     ncolt = np.rint(data.sum(axis=0)).astype(np.int32)
 
-    matrix = np.empty(shape=(nrows, ncols), dtype=np.int32)
+    matrix = np.empty(nrows * ncols, dtype=np.int32)
     seed = np.random.randint(NUMPY_INT_MIN, NUMPY_INT_MAX)
     # simulate the data, returned through matrix inplace modification
     _sim_2d_data_patefield(nrows, ncols, nrowt, ncolt, seed, matrix)
-    return matrix
+    return matrix.reshape(ncols, nrows)
 
 
 def sim_2d_product_multinominal(data:np.ndarray, axis: int) -> np.ndarray:
