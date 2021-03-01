@@ -20,6 +20,11 @@ from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
 from .config import n_cores as NCORES
 
+from phik.simcore import _sim_2d_data_patefield
+
+NUMPY_INT_MIN = np.iinfo(np.int32).min + 1
+NUMPY_INT_MAX = np.iinfo(np.int32).max - 1
+
 try:
     from numba import jit
 except ImportError:
@@ -46,7 +51,7 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
         ndata = hist.sum()
     if ndata <= 0:
         raise ValueError('ndata (or hist.sum()) has to be positive')
-    
+
     # scale and ravel
     hc = hist[:] / hist.sum()
     hcr = hc.ravel()
@@ -56,7 +61,6 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     return hout2d
 
 
-# --- jit turned off for now, somehow not working for patefield; computer dependent!
 def sim_2d_data_patefield(data: np.ndarray) -> np.ndarray:
     """
     Simulate a two dimensional dataset with fixed row and column totals.
@@ -78,144 +82,9 @@ def sim_2d_data_patefield(data: np.ndarray) -> np.ndarray:
     nrowt = data.sum(axis=1)
     ncolt = data.sum(axis=0)
 
-    # total number of entries
-    ntotal = int(np.round(ncolt.sum()))
-
-    # Calculate log-factorials.
-    x = 0.0
-    fact = [x]
-
-    for i in range(1, ntotal + 1):
-        x += np.log(i)
-        fact.append(x)
-
-    # initialize matrix for end result
-    matrix = np.empty(data.shape[0] * data.shape[1])
-    matrix[:] = np.nan
-
-    # Construct a random matrix.
-    jwork = []
-    for i in range(0, ncols - 1):
-        jwork.append(int(np.round(ncolt[i])))
-
-    jc = ntotal
-
-    for l in range(0, nrows - 1):
-        nrowtl = int(np.round(nrowt[l]))
-        ia = int(nrowtl)
-        ic = int(jc)
-        jc = int(jc - nrowtl)
-
-        for m in range(0, ncols - 1):
-            id = jwork[m]
-            ie = int(np.round(ic))
-            ic = int(np.round(ic - id))
-            ib = int(np.round(ie - ia))
-            ii = int(np.round(ib - id))
-
-            # Test for zero entries in matrix.
-            if np.isclose(ie, 0):
-                ia = 0
-                for j in range(m, ncols):
-                    matrix[l + j * nrows] = 0
-                break
-
-            r = np.random.uniform()
-
-            #  Compute the conditional expected value of MATRIX(L,M).
-            done1 = False
-            done2 = False
-
-            while True:  # infinite loop!!!
-                nlm = int(np.round((ia * id) / ie + 0.5))
-                iap = int(np.round(ia + 1))
-                idp = int(np.round(id + 1))
-                igp = int(np.round(idp - nlm))
-                ihp = int(np.round(iap - nlm))
-                nlmp = int(np.round(nlm + 1))
-                iip = int(np.round(ii + nlmp))
-
-                x = np.exp(fact[iap - 1] + fact[ib] + fact[ic] + fact[idp - 1] -
-                           fact[ie] - fact[nlmp - 1] - fact[igp - 1] - fact[ihp - 1] - fact[iip - 1])
-
-                if (r < x) or np.isclose(r, x):
-                    break
-
-                # x, sumprb, y are float
-                sumprb = x
-                y = x
-                nll = nlm
-                lsp = False
-                lsm = False
-
-                # Increment entry in row L, column M.
-                while not lsp:
-                    j = int(np.round((id - nlm) * (ia - nlm)))
-
-                    if np.isclose(j, 0):
-                        # if j == 0:
-                        lsp = True
-                    else:
-                        nlm += 1
-                        x = x * j / (nlm * (ii + nlm))
-                        sumprb += x
-
-                        if (r < sumprb) or np.isclose(r, sumprb):
-                            done1 = True
-                            break
-
-                    done2 = False
-
-                    while not lsm:
-
-                        # Decrement the entry in row L, column M.
-
-                        j = nll * (ii + nll)
-
-                        if np.isclose(j, 0):
-                            lsm = True
-                            break
-
-                        nll -= 1
-                        if np.isclose((id - nll) * (ia - nll), 0):  # make sure not to divide by zero
-                            y = np.inf
-                        else:
-                            y = y * j / ((id - nll) * (ia - nll))
-                        sumprb += y
-
-                        if (r < sumprb) or np.isclose(r, sumprb):
-                            nlm = nll
-                            done2 = True
-                            break
-                    if done2:
-                        break
-
-                if done1 or done2:
-                    break
-
-                r = np.random.uniform()
-                r = sumprb * r
-
-            matrix[l + m * nrows] = nlm
-            ia -= nlm
-            jwork[m] -= nlm
-
-        matrix[l + (ncols - 1) * nrows] = ia
-
-    # Compute the last row.
-    for j in range(ncols - 1):
-        matrix[nrows - 1 + j * nrows] = jwork[j]
-
-    # Compute last value at (m, l)
-    matrix[nrows - 1 + (ncols - 1) * nrows] = int(np.round(ib - matrix[nrows - 1 + (ncols - 2) * nrows]))
-
-    # reshape
-    matrix = matrix.reshape(ncols, nrows).T
-
-    # convert to int (note: int rounds everything down. All number are rounded properly before adding them to the matrix)
-    matrix = matrix.astype(int)
-
-    return matrix
+    matrix = np.empty(data.shape[0] * data.shape[1], dtype=np.int32)
+    seed = np.random.randint(NUMPY_INT_MIN, NUMPY_INT_MAX)
+    return _sim_2d_data_patefield(nrows, ncols, nrowt, ncolt, seed, matrix)
 
 
 def sim_2d_product_multinominal(data:np.ndarray, axis: int) -> np.ndarray:
