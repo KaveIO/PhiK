@@ -37,7 +37,7 @@ def bin_edges(arr: Union[np.ndarray, list, pd.Series], nbins:int, quantile:bool 
         xbins = np.quantile(arr[~np.isnan(arr)], quantiles)
         xbins[0] -= 1E-14
     else:
-        xbins = np.linspace(min(arr[~np.isnan(arr)]) - 1E-14, max(arr[~np.isnan(arr)]), nbins + 1)
+        xbins = np.linspace(np.min(arr[~np.isnan(arr)]) - 1E-14, np.max(arr[~np.isnan(arr)]), nbins + 1)
 
     return xbins
 
@@ -93,6 +93,8 @@ def bin_data(data: pd.DataFrame, cols: Union[list, np.ndarray, tuple]=(), bins:U
         for col in cols:
             if col not in bins:
                 raise ValueError('column {0} is not included in bins dictionary.'.format(col))
+    elif isinstance(bins, (list, np.ndarray)):
+        xbins = bins
 
     # check for numeric bins
     for col in list(set(data._get_numeric_data().columns) - set(cols)):
@@ -105,14 +107,11 @@ def bin_data(data: pd.DataFrame, cols: Union[list, np.ndarray, tuple]=(), bins:U
 
     binned_data = data.copy()
 
-    if isinstance(bins, (list, np.ndarray)):
-        xbins = bins
-
     bins_dict = {}
     for col in cols:
         if isinstance(bins, (int, float)):
             xbins = bin_edges(data[col].astype(float), int(bins), quantile=quantile)
-        if isinstance(bins, dict):
+        elif isinstance(bins, dict):
             if isinstance(bins[col], (int, float)):
                 xbins = bin_edges(data[col].astype(float), int(bins[col]), quantile=quantile)
             elif isinstance(bins[col], (list, np.ndarray)):

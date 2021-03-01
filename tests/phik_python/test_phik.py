@@ -17,6 +17,10 @@ LICENSE.
 import unittest
 import pytest
 
+import pandas as pd
+import numpy as np
+from phik import resources, bivariate
+
 
 @pytest.mark.filterwarnings("ignore:Using or importing the ABCs from")
 class PhiKTest(unittest.TestCase):
@@ -24,9 +28,6 @@ class PhiKTest(unittest.TestCase):
 
     def test_phik_calculation(self):
         """Test the calculation of Phi_K"""
-
-        import numpy as np
-        from phik import bivariate
 
         chi2 = bivariate.chi2_from_phik(0.5, 1000, nx=10, ny=10)
         self.assertTrue( np.isclose(chi2, 271.16068979654125, 1e-6) )
@@ -36,10 +37,6 @@ class PhiKTest(unittest.TestCase):
 
     def test_phik_matrix(self):
         """Test the calculation of Phi_K"""
-        
-        import numpy as np
-        import pandas as pd
-        from phik import resources
 
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
@@ -57,10 +54,6 @@ class PhiKTest(unittest.TestCase):
     def test_global_phik(self):
         """Test the calculation of global Phi_K values"""
 
-        import numpy as np
-        import pandas as pd
-        from phik import resources
-
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
 
@@ -76,12 +69,8 @@ class PhiKTest(unittest.TestCase):
         self.assertTrue(np.isclose(gk[0][car_size][0], 0.76858883))
         self.assertTrue(np.isclose(gk[0][mileage][0], 0.768588987856336))
 
-    def test_significance_matrix(self):
+    def test_significance_matrix_asymptotic(self):
         """Test significance calculation"""
-
-        import numpy as np
-        import pandas as pd
-        from phik import resources
 
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
@@ -95,11 +84,38 @@ class PhiKTest(unittest.TestCase):
         self.assertTrue(np.isclose(sm.values[cols.index('mileage'), cols.index('car_size')], 49.3323049685695))
         self.assertTrue(np.isclose(sm.values[cols.index('car_size'), cols.index('mileage')], 49.3323049685695))
 
+    def test_significance_matrix_hybrid(self):
+        """Test significance calculation"""
+
+        # open fake car insurance data
+        df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
+        cols = list(df.columns)
+        # get significances
+        interval_cols = ['driver_age', 'mileage']
+        sm = df.significance_matrix(interval_cols=interval_cols, significance_method='hybrid')
+
+        self.assertTrue(np.isclose(sm.values[cols.index('car_color'), cols.index('area')], 37.63086023595297, atol=10e-2))
+        self.assertTrue(np.isclose(sm.values[cols.index('area'), cols.index('car_color')], 37.63086023595297, atol=10e-2))
+        self.assertTrue(np.isclose(sm.values[cols.index('mileage'), cols.index('car_size')], 49.28345609465683, atol=10e-2))
+        self.assertTrue(np.isclose(sm.values[cols.index('car_size'), cols.index('mileage')], 49.28345609465683, atol=10e-2))
+
+    def test_significance_matrix_mc(self):
+        """Test significance calculation"""
+
+        # open fake car insurance data
+        df = pd.read_csv(resources.fixture('fake_insurance_data.csv.gz'))
+        cols = list(df.columns)
+        # get significances
+        interval_cols = ['driver_age', 'mileage']
+        sm = df.significance_matrix(interval_cols=interval_cols, significance_method='MC')
+
+        self.assertTrue(np.isclose(sm.values[cols.index('car_color'), cols.index('area')], np.inf))
+        self.assertTrue(np.isclose(sm.values[cols.index('area'), cols.index('car_color')], np.inf))
+        self.assertTrue(np.isclose(sm.values[cols.index('mileage'), cols.index('car_size')], np.inf))
+        self.assertTrue(np.isclose(sm.values[cols.index('car_size'), cols.index('mileage')], np.inf))
+
     def test_hist2d(self):
         """Test the calculation of global Phi_K values"""
-
-        import pandas as pd
-        from phik import resources
 
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
@@ -115,9 +131,6 @@ class PhiKTest(unittest.TestCase):
     def test_hist2d_array(self):
         """Test the calculation of global Phi_K values"""
 
-        import pandas as pd
-        from phik import resources
-
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
 
@@ -129,10 +142,6 @@ class PhiKTest(unittest.TestCase):
 
     def test_outlier_significance_matrix(self):
         """Test the calculation of outlier significances"""
-
-        import numpy as np
-        import pandas as pd
-        from phik import resources
 
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
@@ -147,9 +156,6 @@ class PhiKTest(unittest.TestCase):
 
     def test_outlier_significance_matrices(self):
         """Test the calculation of outlier significances"""
-
-        import pandas as pd
-        from phik import resources
 
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
