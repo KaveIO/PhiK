@@ -13,8 +13,14 @@ modification, are permitted according to the terms listed in the file
 LICENSE.
 """
 
+import os
+import sys
+import subprocess
 from setuptools import find_packages
-from setuptools import setup
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
+import pybind11
+
 
 NAME = 'phik'
 
@@ -54,16 +60,68 @@ EXTRA_REQUIREMENTS = {
 if DEV:
     REQUIREMENTS += TEST_REQUIREMENTS
 
-CMD_CLASS = dict()
-COMMAND_OPTIONS = dict()
+# A CMakeExtension needs a sourcedir instead of a file list.
+# The name must be the _single_ output extension from the CMake build.
+# If you need multiple extensions, see scikit-build.
+class CMakeExtension(Extension):
+    def __init__(self, name, sourcedir=""):
+        Extension.__init__(self, name, sources=[])
+        self.sourcedir = os.path.abspath(sourcedir)
 
+
+class CMakeBuild(build_ext):
+    def build_extension(self, ext):
+        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+
+        # required for auto-detection of auxiliary "native" libs
+        if not extdir.endswith(os.path.sep):
+            extdir += os.path.sep
+
+        cfg = "Debug" if self.debug else "Release"
+
+        # CMake lets you override the generator - we need to check this.
+        # Can be set with Conda-Build, for example.
+        cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
+
+        os.environ['PYBIND_CMAKE'] = pybind11.get_cmake_dir()
+
+        # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
+        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
+        # from Python.
+        cmake_args = [
+            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(extdir),
+            "-DPYTHON_EXECUTABLE={}".format(sys.executable),
+            "-DCMAKE_BUILD_TYPE={}".format(cfg),  # not used on MSVC, but no harm
+        ]
+        build_args = []
+
+        # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
+        # across all generators.
+        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
+            # self.parallel is a Python 3 only way to set parallel jobs by hand
+            # using -j in the build_ext call, not supported by pip or PyPA-build.
+            if hasattr(self, "parallel") and self.parallel:
+                # CMake 3.12+ only.
+                build_args += ["-j{}".format(self.parallel)]
+
+        if not os.path.exists(self.build_temp):
+            os.makedirs(self.build_temp)
+
+        subprocess.check_call(
+            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp
+        )
+        subprocess.check_call(
+            ["cmake", "--build", "."] + build_args, cwd=self.build_temp
+        )
+
+CMD_CLASS = {"build_ext": CMakeBuild}
+COMMAND_OPTIONS = dict()
 EXCLUDE_PACKAGES = []
-EXTERNAL_MODULES = []
+EXTERNAL_MODULES = [CMakeExtension('_simulation')]
 
 # read the contents of readme file
 with open("README.rst", encoding="utf-8") as f:
     long_description = f.read()
-
 
 def write_version_py(filename: str = 'python/phik/version.py') -> None:
     """Write package version to version.py.
@@ -88,6 +146,7 @@ release = {is_release!s}
         version_file.write(
             version_str.format(name=NAME.lower(), version=VERSION, full_version=FULL_VERSION, is_release=not DEV)
         )
+
 
 
 def setup_package() -> None:
@@ -116,7 +175,10 @@ def setup_package() -> None:
           # This is a feature and not a bug, see
           # http://setuptools.readthedocs.io/en/latest/setuptools.html#non-package-data-files
           package_data={
-              NAME.lower(): ['data/*', 'notebooks/phik_tutorial*.ipynb']
+              NAME.lower(): [
+                'data/*',
+                'notebooks/phik_tutorial*.ipynb',
+            ]
           },
           install_requires=REQUIREMENTS,
           extras_require=EXTRA_REQUIREMENTS,
@@ -124,6 +186,7 @@ def setup_package() -> None:
           ext_modules=EXTERNAL_MODULES,
           cmdclass=CMD_CLASS,
           command_options=COMMAND_OPTIONS,
+          zip_safe=False,
           classifiers=(
               "Programming Language :: Python :: 3",
               "Operating System :: OS Independent",
