@@ -55,6 +55,7 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
     mu = np.array([0., 0.])
     S = np.array([[1., rho], [rho, 1.]])
 
+    # callling mvn.mvnun is expansive, so we only calculate half of the matrix, then symmetrize
     # add half block, which is symmetric in x
     odd_odd = False
     ranges = [([sx[i], sy[j]], [sx[i+1], sy[j+1]]) for i in range((len(sx)-1)//2) for j in range(len(sy) - 1)]
@@ -68,11 +69,9 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
             ranges.append(([sx[i], sy[j]], [sx[i+1], sy[j+1]]))
             odd_odd = True
 
-    corr = [_calc_mvnun(lower, upper, mu, S) for lower, upper in ranges]
-
+    corr = np.array([_calc_mvnun(lower, upper, mu, S) for lower, upper in ranges])
     # add second half, exclude center
-    corr += corr if not odd_odd else corr[:-1]
-
+    corr = np.concatenate([corr, corr if not odd_odd else corr[:-1]])
     return corr
 
 
@@ -113,10 +112,8 @@ def bivariate_normal_theory(rho: float, nx:int=-1, ny:int=-1, n:int=1,
 
     # patch for entry levels that are below machine precision
     # (simulation does not work otherwise)
-    for i in range(len(sx) - 1):
-        for j in range(len(sy) - 1):
-            if bvn[j, i] < np.finfo(np.float).eps:
-                bvn[j, i] = np.finfo(np.float).eps
+    bvn[bvn < np.finfo(np.float).eps] = np.finfo(np.float).eps
+
     return bvn
 
 
@@ -152,12 +149,22 @@ def chi2_from_phik(rho: float, n: int, subtract_from_chi2:float=0,
     if scale is None:
         # scale ensures that for rho=1, chi2 is the maximum possible value
         corr1 = _mvn_array(1, sx, sy)
-        chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 for c0, c1 in zip(corr0, corr1)])
+        delta_corr2 = (corr1 - corr0) ** 2
+        # protect against division by zero
+        ratio = np.divide(delta_corr2, corr0, out=np.zeros_like(delta_corr2), where=corr0!=0)
+        chi2_one = n * np.sum(ratio)
+        # chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 for c0, c1 in zip(corr0, corr1)])
         chi2_max = n * min(nx-1, ny-1)
         scale = (chi2_max - pedestal) / chi2_one
 
     corrr = _mvn_array(rho, sx, sy)
-    chi2 = pedestal + (n * sum([((cr-c0)*(cr-c0)) / c0 for c0, cr in zip(corr0, corrr)])) * scale
+    delta_corr2 = (corrr - corr0) ** 2
+    # protect against division by zero
+    ratio = np.divide(delta_corr2, corr0, out=np.zeros_like(delta_corr2), where=corr0!=0)
+    chi2_rho = n * np.sum(ratio)
+    # chi2_rho = (n * sum([((cr-c0)*(cr-c0)) / c0 for c0, cr in zip(corr0, corrr)]))
+
+    chi2 = pedestal + chi2_rho * scale
     return chi2 - subtract_from_chi2
 
 
@@ -188,7 +195,6 @@ def phik_from_chi2(chi2:float, n:int, nx:int, ny:int, sx:np.ndarray=None, sy:np.
         sx = np.linspace(-5,5,nx+1)
     elif nx <= 1:
         raise ValueError('number of bins along x-axis is unknown')
-
     if sy is None:
         sy = np.linspace(-5,5,ny+1)
     elif ny <= 1:
@@ -201,7 +207,11 @@ def phik_from_chi2(chi2:float, n:int, nx:int, ny:int, sx:np.ndarray=None, sy:np.
     if 0 in corr0 and len(corr0) > 10000:
         warnings.warn('Many cells: {0:d}. Are interval variables set correctly?'.format(len(corr0)))
 
-    chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 for c0,c1 in zip(corr0,corr1)])
+    delta_corr2 = (corr1 - corr0) ** 2
+    # protect against division by zero
+    ratio = np.divide(delta_corr2, corr0, out=np.zeros_like(delta_corr2), where=corr0!=0)
+    chi2_one = n * np.sum(ratio)
+    # chi2_one = n * sum([((c1-c0)*(c1-c0)) / c0 if c0 > 0 else 0 for c0,c1 in zip(corr0,corr1)])
     chi2_max = n * min(nx-1, ny-1)
     scale = (chi2_max - pedestal) / chi2_one
     if chi2 > chi2_max and np.isclose(chi2, chi2_max, atol=1E-14):
@@ -210,7 +220,7 @@ def phik_from_chi2(chi2:float, n:int, nx:int, ny:int, sx:np.ndarray=None, sy:np.
     # only solve for rho if chi2 exceeds noise pedestal
     if chi2 <= pedestal:
         return 0.
-    if chi2 >= chi2_max:
+    elif chi2 >= chi2_max:
         return 1.
 
     rho = optimize.brentq(chi2_from_phik, 0, 1, args=(n, chi2, corr0, scale, sx, sy, pedestal), xtol=1e-5)

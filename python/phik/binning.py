@@ -94,14 +94,7 @@ def bin_data(data: pd.DataFrame, cols: Union[list, np.ndarray, tuple]=(), bins:U
             if col not in bins:
                 raise ValueError('column {0} is not included in bins dictionary.'.format(col))
 
-    # check for numeric bins
-    for col in list(set(data._get_numeric_data().columns) - set(cols)):
-        nuq = data[col].nunique()
-        if (nuq > 0.9 * len(data)) or (nuq > 100):
-            warnings.warn(
-                "numeric variable {1:s} has {0:d} unique values. Are you sure you don't want to bin it?".format(nuq, str(col)),
-                Warning
-            )
+    # MB 20210307: check for numeric bins turned off here, also done in dq_check_nunique_values().
 
     binned_data = data.copy()
 

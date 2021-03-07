@@ -356,8 +356,8 @@ def phik_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray,
         y = pd.Series(y).fillna(defs.NaN).astype(str).values
 
     if drop_underflow or drop_overflow:
-        x = x.copy()
-        y = y.copy()
+        x = pd.Series(x).astype(str).values
+        y = pd.Series(y).astype(str).values
         if drop_underflow:
             x[np.where(x == defs.UF)] = np.nan
             y[np.where(y == defs.UF)] = np.nan
