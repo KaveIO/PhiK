@@ -410,8 +410,8 @@ def significance_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.
         y = pd.Series(y).fillna(defs.NaN).astype(str).values # crosstab cannot handle mixed type y!
 
     if drop_underflow or drop_overflow:
-        x = x.copy()
-        y = y.copy()
+        x = pd.Series(x).astype(str).values
+        y = pd.Series(y).astype(str).values
         if drop_underflow:
             x[np.where(x == defs.UF)] = np.nan
             y[np.where(y == defs.UF)] = np.nan
