@@ -1,0 +1,21 @@
+name: test
+
+on: [push, pull_request]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install "pytest>=4.0.2" "pytest-pylint>=0.13.0" "nbconvert>=5.3.1" "jupyter_client>=5.2.3"
+    - name: Test with pytest
+      run: |
+        pytest tests/phik_python/test_phik.py

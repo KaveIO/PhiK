@@ -18,6 +18,7 @@ import numpy as np
 import itertools
 import pandas as pd
 from joblib import Parallel, delayed
+from numpy.linalg import inv
 
 from phik import definitions as defs
 from .bivariate import phik_from_chi2
@@ -25,6 +26,7 @@ from .statistics import get_chi2_using_dependent_frequency_estimates, estimate_s
 from .binning import create_correlation_overview_table, bin_data
 from .data_quality import dq_check_nunique_values, dq_check_hist2d
 from .utils import array_like_to_dataframe, guess_interval_cols
+from .config import n_cores as NCORES
 
 
 def spark_phik_matrix_from_hist2d_dict(spark_context, hist_dict: dict):
@@ -132,7 +134,6 @@ def phik_from_rebinned_df(data_binned: pd.DataFrame, noise_correction:bool=True,
     # cache column order (https://github.com/KaveIO/PhiK/issues/1)
     column_order = data_binned.columns
     
-    from phik.config import ncores as NCORES
     if NCORES == 1:
         # Useful when for instance using cProfiler: https://docs.python.org/3/library/profile.html
         phik_list = [
@@ -244,7 +245,6 @@ def global_phik_from_rebinned_df(data_binned:pd.DataFrame, noise_correction:bool
     phik_overview = phik_from_rebinned_df(
         data_binned, noise_correction, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow
     )
-    from numpy.linalg import inv
     V = phik_overview.values
     Vinv = inv(V)
     global_correlations = np.array([[np.sqrt(1 - 1/(V[i][i] * Vinv[i][i]))] for i in range(V.shape[0])])

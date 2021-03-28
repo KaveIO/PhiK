@@ -13,14 +13,12 @@ modification, are permitted according to the terms listed in the file
 LICENSE.
 """
 
-from typing import Union
-
 import numpy as np
-import pandas as pd
 from joblib import Parallel, delayed
 
 from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
+from .config import n_cores as NCORES
 
 try:
     from numba import jit
@@ -34,7 +32,6 @@ except ImportError:
         return decorator
 
 
-#@jit
 def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     """
     Simulate a 2 dimensional dataset given a 2 dimensional pdf
@@ -60,7 +57,6 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
 
 
 # --- jit turned off for now, somehow not working for patefield; computer dependent!
-#@jit
 def sim_2d_data_patefield(data: np.ndarray) -> np.ndarray:
     """
     Simulate a two dimensional dataset with fixed row and column totals.
@@ -271,8 +267,7 @@ def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
         raise NotImplementedError('selected method not recognized.')
 
 
-# @jit
-def sim_chi2_distribution(values: Union[pd.DataFrame, np.ndarray], nsim:int=1000, lambda_:str='log-likelihood',
+def sim_chi2_distribution(values: np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
                           simulation_method:str='multinominal', alt_hypothesis:bool=False) -> list:
     """
     Simulate 2D data and calculate the chi-square statistic for each simulated dataset.
@@ -285,12 +280,12 @@ def sim_chi2_distribution(values: Union[pd.DataFrame, np.ndarray], nsim:int=1000
     :param bool alt_hypothesis: if True, simulate values directly, and not its dependent frequency estimates.
     :returns chi2s: list of chi2 values for each simulated dataset
     """
-    values = values.values if isinstance(values, pd.DataFrame) else values
-
     exp_dep = get_dependent_frequency_estimates(values) if not alt_hypothesis else values
 
-    from phik.config import ncores as NCORES
-    chi2s = Parallel(n_jobs=NCORES)(delayed(_simulate_and_fit)(exp_dep, simulation_method, lambda_) for i in range(nsim))
+    if NCORES > 1:
+        chi2s = Parallel(n_jobs=NCORES)(delayed(_simulate_and_fit)(exp_dep, simulation_method, lambda_) for _ in range(nsim))
+    else:
+        chi2s = [_simulate_and_fit(exp_dep, simulation_method, lambda_) for _ in range(nsim)]
 
     return chi2s
 
