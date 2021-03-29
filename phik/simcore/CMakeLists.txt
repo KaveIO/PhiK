@@ -6,6 +6,9 @@ SET(SUBPATH ${PROJECT_SOURCE_DIR}/phik/simcore/)
 # ##############################################################################
 #                          build ASA159 library                                #
 # ##############################################################################
+IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fPIC")
+ENDIF()
 
 ADD_LIBRARY(_asa159
     OBJECT
