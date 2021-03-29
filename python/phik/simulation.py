@@ -22,7 +22,6 @@ from .config import n_cores as NCORES
 
 from phik.simcore import _sim_2d_data_patefield
 
-NUMPY_INT_MIN = np.iinfo(np.int32).min + 1
 NUMPY_INT_MAX = np.iinfo(np.int32).max - 1
 
 try:
@@ -61,7 +60,7 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     return hout2d
 
 
-def sim_2d_data_patefield(data: np.ndarray) -> np.ndarray:
+def sim_2d_data_patefield(data: np.ndarray, seed : int = None) -> np.ndarray:
     """
     Simulate a two dimensional dataset with fixed row and column totals.
 
@@ -71,6 +70,7 @@ def sim_2d_data_patefield(data: np.ndarray) -> np.ndarray:
     https://people.sc.fsu.edu/~jburkardt/c_src/asa159/asa159.html
 
     :param data: contingency table, which contains the observed number of occurrences in each category.\
+    :param seed: optional seed for the simulation, primarily for testing purposes.\
     This table is used as probability density function.
     :return: simulated data
     """
@@ -79,11 +79,16 @@ def sim_2d_data_patefield(data: np.ndarray) -> np.ndarray:
     nrows, ncols = data.shape
 
     # totals per row and column
+    # NOTE we assume that sum will fit in a 32 bit int
     nrowt = np.rint(data.sum(axis=1)).astype(np.int32)
     ncolt = np.rint(data.sum(axis=0)).astype(np.int32)
 
+    # set seed if it is None
+    seed = seed or np.random.randint(0, NUMPY_INT_MAX)
+
+    # allocate memory that will be set by _sim_2d_data_patefield
     matrix = np.empty(nrows * ncols, dtype=np.int32)
-    seed = np.random.randint(NUMPY_INT_MIN, NUMPY_INT_MAX)
+
     # simulate the data, returned through matrix inplace modification
     _sim_2d_data_patefield(nrows, ncols, nrowt, ncolt, seed, matrix)
     return matrix.reshape(ncols, nrows)
