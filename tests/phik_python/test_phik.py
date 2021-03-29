@@ -37,7 +37,6 @@ class PhiKTest(unittest.TestCase):
 
     def test_phik_matrix(self):
         """Test the calculation of Phi_K"""
-
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
         cols = list(df.columns)
@@ -57,7 +56,7 @@ class PhiKTest(unittest.TestCase):
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
 
-        # get the global phi_k values 
+        # get the global phi_k values
         interval_cols = ['driver_age', 'mileage']
         gk = df.global_phik(interval_cols=interval_cols)
 
@@ -165,3 +164,19 @@ class PhiKTest(unittest.TestCase):
         om = df.outlier_significance_matrices(interval_cols=interval_cols)
 
         self.assertTrue(isinstance(om, dict))
+
+    def test_simulation_2d_patefield(self):
+        """Test simulation code using patefield algorithm."""
+        import numpy as np
+        from phik.simulation import sim_2d_data_patefield
+        o_seed = np.random.get_state()
+        np.random.seed(42)
+        test_data = np.random.randint(1, 100, (20, 2))
+        res = sim_2d_data_patefield(test_data)
+
+        self.assertTrue(np.isclose(res, ref))
+
+        # reset seed
+        np.random.seed(o_seed)
+
+
