@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.14.4)
 
 SET(MODNAME "phik_simulation_core")
-SET(SUBPATH ${PROJECT_SOURCE_DIR}/python/phik/simcore/)
+SET(SUBPATH ${PROJECT_SOURCE_DIR}/phik/simcore/)
 
 # ##############################################################################
 #                          build ASA159 library                                #

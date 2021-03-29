@@ -20,6 +20,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from phik import resources, bivariate
+from phik.simulation import sim_2d_data_patefield
 
 
 @pytest.mark.filterwarnings("ignore:Using or importing the ABCs from")
@@ -167,8 +168,6 @@ class PhiKTest(unittest.TestCase):
 
     def test_simulation_2d_patefield(self):
         """Test simulation code using patefield algorithm."""
-        import numpy as np
-        from phik.simulation import sim_2d_data_patefield
         og_state = np.random.get_state()
         np.random.seed(42)
         sample = np.random.randint(1, 200, (50, 2))

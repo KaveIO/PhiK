@@ -123,7 +123,7 @@ EXTERNAL_MODULES = [CMakeExtension('_simulation')]
 with open("README.rst", encoding="utf-8") as f:
     long_description = f.read()
 
-def write_version_py(filename: str = 'python/phik/version.py') -> None:
+def write_version_py(filename: str = 'phik/version.py') -> None:
     """Write package version to version.py.
 
     This will ensure that the version in version.py is in sync with us.
@@ -168,9 +168,8 @@ def setup_package() -> None:
           description="Phi_K correlation analyzer library",
           long_description=long_description,
           long_description_content_type="text/x-rst",
-          python_requires='>=3.5',
-          package_dir={'': 'python'},
-          packages=find_packages(where='python', exclude=EXCLUDE_PACKAGES),
+          python_requires='>=3.6',
+          packages=find_packages(exclude=EXCLUDE_PACKAGES),
           # Setuptools requires that package data are located inside the package.
           # This is a feature and not a bug, see
           # http://setuptools.readthedocs.io/en/latest/setuptools.html#non-package-data-files
@@ -180,6 +179,7 @@ def setup_package() -> None:
                 'notebooks/phik_tutorial*.ipynb',
             ]
           },
+          include_package_data=True,
           install_requires=REQUIREMENTS,
           extras_require=EXTRA_REQUIREMENTS,
           tests_require=TEST_REQUIREMENTS,
