@@ -169,14 +169,14 @@ class PhiKTest(unittest.TestCase):
         """Test simulation code using patefield algorithm."""
         import numpy as np
         from phik.simulation import sim_2d_data_patefield
-        o_seed = np.random.get_state()
+        og_state = np.random.get_state()
         np.random.seed(42)
-        test_data = np.random.randint(1, 100, (20, 2))
-        res = sim_2d_data_patefield(test_data)
+        sample = np.random.randint(1, 200, (50, 2))
 
-        self.assertTrue(np.isclose(res, ref))
-
-        # reset seed
-        np.random.seed(o_seed)
-
+        # call test function
+        res = sim_2d_data_patefield(sample, seed=42)
+        np.random.set_state(og_state)
+        mean0, mean1 = res.mean(1)
+        self.assertTrue(np.isclose(mean0, 105.46))
+        self.assertTrue(np.isclose(mean1, 91.18))
 
