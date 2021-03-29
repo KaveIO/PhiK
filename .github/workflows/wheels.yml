@@ -10,11 +10,6 @@ on:
     types:
       - published
 
-env:
-  CIBW_TEST_EXTRAS: test
-  CIBW_TEST_COMMAND: pytest {project}/tests
-
-
 jobs:
   build_sdist:
     name: Build SDist
@@ -62,6 +57,9 @@ jobs:
       run: python -m cibuildwheel --output-dir wheelhouse
       env:
         CIBW_BUILD: 'cp36-* cp37-* cp38-* cp39-*'
+        CIBW_TEST_EXTRAS: test
+        CIBW_BEFORE_TEST: pip install jupyter
+        CIBW_TEST_COMMAND: pytest {project}/tests
 
     - name: Show files
       run: ls -lh wheelhouse
