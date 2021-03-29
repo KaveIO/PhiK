@@ -55,6 +55,7 @@ EXTRA_REQUIREMENTS = {
     'numba': [
         'numba>=0.38.1',
     ],
+    'test': TEST_REQUIREMENTS,
 }
 
 if DEV:
