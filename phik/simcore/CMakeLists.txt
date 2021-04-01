@@ -23,6 +23,7 @@ pybind11_add_module(${MODNAME}
     MODULE
         ${SUBPATH}/bindings.cpp
         ${SUBPATH}/simulation.hpp
+        $<TARGET_OBJECTS:_asa159>
 )
 
 TARGET_COMPILE_DEFINITIONS(${MODNAME} PRIVATE VERSION_INFO=${PHIK_VERSION_INFO})
@@ -32,12 +33,6 @@ TARGET_INCLUDE_DIRECTORIES(${MODNAME}
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${SUBPATH}>
 )
-
-TARGET_LINK_LIBRARIES(${MODNAME}
-    PRIVATE
-        $<TARGET_OBJECTS:_asa159>
-)
-
 # ##############################################################################
 #                                   INSTALL                                    #
 # ##############################################################################
