@@ -69,12 +69,12 @@ You can either install Numba separately or use the `numba` extra specifier while
 C++ Extension
 -------------
 
-Phi_K contains an optional C++ extension to compute the significance matrix using the Patefield algorithm.
+Phi_K contains an optional C++ extension to compute the significance matrix using the `hypergeometric` method.
 
 Note that the PyPi distributed wheels contain a pre-build extension for Linux, MacOS and Windows.
 
 The setup will attempt to build and install the extension, if it fails it will install without the extension.
-Using the Patefield algorithm without the extension will trigger a NotImplementedError.
+Using the `hypergeometric` method without the extension will trigger a NotImplementedError.
 
 Compiler requirements through Pybind11:
 
