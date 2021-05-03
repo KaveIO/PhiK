@@ -66,6 +66,26 @@ You can either install Numba separately or use the `numba` extra specifier while
 
   $ pip install phik[numba]
 
+C++ Extension
+-------------
+
+Phi_K contains an optional C++ extension to compute the significance matrix using the Patefield algorithm.
+
+Note that the PyPi distributed wheels contain a pre-build extension for Linux, MacOS and Windows.
+
+The setup will attempt to build and install the extension, if it fails it will install without the extension.
+Using the Patefield algorithm without the extension will trigger a NotImplementedError.
+
+Compiler requirements through Pybind11:
+
+- Clang/LLVM 3.3 or newer (for Apple Xcode's clang, this is 5.0.0 or newer)
+- GCC 4.8 or newer
+- Microsoft Visual Studio 2015 Update 3 or newer
+- Intel classic C++ compiler 18 or newer (ICC 20.2 tested in CI)
+- Cygwin/GCC (previously tested on 2.5.1)
+- NVCC (CUDA 11.0 tested in CI)
+- NVIDIA PGI (20.9 tested in CI)
+
 Quick run
 =========
 
