@@ -16,18 +16,28 @@ LICENSE.
 import os
 import sys
 import subprocess
+from warnings import warn
 from setuptools import find_packages
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from distutils.errors import CompileError, DistutilsExecError, DistutilsPlatformError
 import pybind11
+
+ext_errors = (
+    CompileError,
+    DistutilsExecError,
+    DistutilsPlatformError,
+    IOError,
+    SystemExit
+)
 
 
 NAME = 'phik'
 
 MAJOR = 0
-REVISION = 11
-PATCH = 2
-DEV = False
+REVISION = 12
+PATCH = 0
+DEV = True
 
 # note: also update README.rst
 
@@ -188,62 +198,70 @@ release = {is_release!s}
         )
 
 
-
-def setup_package() -> None:
-    """The main setup method.
-
-    It is responsible for setting up and installing the package.
-
-    :return:
-    :rtype: None
-    """
-    write_version_py()
-
-    setup(name=NAME,
-          version=FULL_VERSION,
-          url='http://phik.rtfd.io',
-          license='Apache-2',
-          author='KPMG N.V. The Netherlands',
-          author_email='kave@kpmg.com',
-          description="Phi_K correlation analyzer library",
-          long_description=long_description,
-          long_description_content_type="text/x-rst",
-          python_requires='>=3.6',
-          packages=find_packages(exclude=EXCLUDE_PACKAGES),
-          # Setuptools requires that package data are located inside the package.
-          # This is a feature and not a bug, see
-          # http://setuptools.readthedocs.io/en/latest/setuptools.html#non-package-data-files
-          package_data={
-              NAME.lower(): [
-                'data/*',
-                'notebooks/phik_tutorial*.ipynb',
-            ]
-          },
-          include_package_data=True,
-          install_requires=REQUIREMENTS,
-          extras_require=EXTRA_REQUIREMENTS,
-          tests_require=TEST_REQUIREMENTS,
-          ext_modules=EXTERNAL_MODULES,
-          cmdclass=CMD_CLASS,
-          command_options=COMMAND_OPTIONS,
-          zip_safe=False,
-          classifiers=(
-              "Programming Language :: Python :: 3",
-              "Operating System :: OS Independent",
-              "License :: OSI Approved :: Apache Software License",
-          ),
-          # The following 'creates' executable scripts for *nix and Windows.
-          # As an added bonus the Windows scripts will auto-magically
-          # get a .exe extension.
-          #
-          # phik_trial: test application to let loose on tests. This is just a wrapper around pytest.
-          entry_points={
-              'console_scripts': [
-                  'phik_trial = phik.entry_points:phik_trial'
-              ]
-          }
-          )
-
+setup_args = {
+    'name': NAME,
+    'version': FULL_VERSION,
+    'url': 'http://phik.rtfd.io',
+    'license': 'Apache-2',
+    'author': 'KPMG N.V. The Netherlands',
+    'author_email': 'kave@kpmg.com',
+    'description': "Phi_K correlation analyzer library",
+    'long_description': long_description,
+    'long_description_content_type': "text/x-rst",
+    'python_requires': '>=3.6',
+    'packages': find_packages(exclude=EXCLUDE_PACKAGES),
+    # Setuptools requires that package data are located inside the package.
+    # This is a feature and not a bug, see
+    # http://setuptools.readthedocs.io/en/latest/setuptools.html#non-package-data-files
+    'package_data': {
+        NAME.lower(): [
+          'data/*',
+          'notebooks/phik_tutorial*.ipynb',
+      ]
+    },
+    'include_package_data': True,
+    'install_requires': REQUIREMENTS,
+    'extras_require': EXTRA_REQUIREMENTS,
+    'tests_require': TEST_REQUIREMENTS,
+    'cmdclass': CMD_CLASS,
+    'command_options': COMMAND_OPTIONS,
+    'zip_safe': False,
+    'classifiers': [
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+        "License :: OSI Approved :: Apache Software License",
+    ],
+    # The following 'creates' executable scripts for *nix and Windows.
+    # As an added bonus the Windows scripts will auto-magically
+    # get a .exe extension.
+    #
+    # phik_trial: test application to let loose on tests. This is just a wrapper around pytest.
+    'entry_points': {
+        'console_scripts': [
+            'phik_trial = phik.entry_points:phik_trial'
+        ]
+    }
+}
 
 if __name__ == '__main__':
-    setup_package()
+    write_version_py()
+    try:
+        # try building with C++ extension:
+        setup(ext_modules=EXTERNAL_MODULES, **setup_args)
+    except ext_errors as ex:
+        warn(
+            '\n---------------------------------------------\n'
+            'WARNING\n\n'
+            'The Phi_K C++ extension could not be compiled\n\n'
+            f'{ex.__class__.__name__} {ex.__str__()}\n\n'
+            '\n---------------------------------------------\n'
+        )
+
+        ## Retry to install the module without extension :
+        # Remove any previously defined build_ext command class.
+        if 'build_ext' in setup_args['cmdclass']:
+            del setup_args['cmdclass']['build_ext']
+
+        # If this new 'setup' call doesn't fail, the module
+        # will be successfully installed, without the C++ extension :
+        setup(**setup_args)

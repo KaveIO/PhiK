@@ -20,7 +20,11 @@ from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
 from .config import n_cores as NCORES
 
-from phik.simcore import _sim_2d_data_patefield
+try:
+    from phik.simcore import _sim_2d_data_patefield
+    CPP_SUPPORT = True
+except ImportError:
+    CPP_SUPPORT = False
 
 NUMPY_INT_MAX = np.iinfo(np.int32).max - 1
 
@@ -74,6 +78,11 @@ def sim_2d_data_patefield(data: np.ndarray, seed : int = None) -> np.ndarray:
     This table is used as probability density function.
     :return: simulated data
     """
+
+    if not CPP_SUPPORT:
+        raise NotImplementedError(
+            'Patefield requires a compiled extension that was not found.'
+        )
 
     # number of rows and columns
     nrows, ncols = data.shape
