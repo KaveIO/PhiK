@@ -58,8 +58,7 @@ jobs:
       env:
         CIBW_BUILD: 'cp36-* cp37-* cp38-* cp39-*'
         CIBW_TEST_EXTRAS: test
-        CIBW_BEFORE_TEST: python -m pip install pip --upgrade && python -m pip install jupyter
-        CIBW_TEST_COMMAND: pytest {project}/tests
+        CIBW_TEST_COMMAND: pytest {project}/tests/phik_python/test_phik.py
 
     - name: Show files
       run: ls -lh wheelhouse
