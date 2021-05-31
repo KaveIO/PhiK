@@ -112,9 +112,9 @@ def significance_from_chi2_ndof(chi2: float, ndof: float) -> Tuple[float, float]
 
 
 def significance_from_chi2_asymptotic(values:np.ndarray, chi2:float) -> Tuple[float,float]:
-    """ 
+    """
     Convert a chi2 into significance using knowledge about the number of degrees of freedom
-    
+
     Convention is done using asymptotic approximation.
 
     :param float chi2: chi2 value
@@ -208,7 +208,7 @@ def significance_from_hist2d(values:np.ndarray, nsim:int=1000, lambda_:str='log-
     :param values: contingency table
     :param int nsim: number of simulations
     :param str lambda_: test statistic. Available options are [pearson, log-likelihood]
-    :param str simulation_method: simulation method. Options: [mutlinominal, row_product_multinominal, \
+    :param str simulation_method: simulation method. Options: [multinominal, row_product_multinominal, \
      col_product_multinominal, hypergeometric].
     :param str significance_method: significance_method. Options: [asymptotic, MC, hybrid]
     :return: pvalue, significance

@@ -20,6 +20,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from phik import resources, bivariate
+from phik.simulation import sim_2d_data_patefield
 
 
 @pytest.mark.filterwarnings("ignore:Using or importing the ABCs from")
@@ -37,7 +38,6 @@ class PhiKTest(unittest.TestCase):
 
     def test_phik_matrix(self):
         """Test the calculation of Phi_K"""
-
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
         cols = list(df.columns)
@@ -57,7 +57,7 @@ class PhiKTest(unittest.TestCase):
         # open fake car insurance data
         df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
 
-        # get the global phi_k values 
+        # get the global phi_k values
         interval_cols = ['driver_age', 'mileage']
         gk = df.global_phik(interval_cols=interval_cols)
 
@@ -165,3 +165,17 @@ class PhiKTest(unittest.TestCase):
         om = df.outlier_significance_matrices(interval_cols=interval_cols)
 
         self.assertTrue(isinstance(om, dict))
+
+    def test_simulation_2d_patefield(self):
+        """Test simulation code using patefield algorithm."""
+        og_state = np.random.get_state()
+        np.random.seed(42)
+        sample = np.random.randint(1, 200, (50, 2))
+
+        # call test function
+        res = sim_2d_data_patefield(sample, seed=42)
+        np.random.set_state(og_state)
+        mean0, mean1 = res.mean(1)
+        self.assertTrue(np.isclose(mean0, 105.46))
+        self.assertTrue(np.isclose(mean1, 91.18))
+
