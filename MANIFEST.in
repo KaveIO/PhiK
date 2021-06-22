@@ -1,7 +1,12 @@
 include NOTICE
 include LICENSE
+include CMakeLists.txt
+include phik/simcore/CMakeLists.txt
+recursive-include phik *.hpp
+recursive-include phik *.cpp
 
 global-include README.rst
+global-include CMakeLists.txt
 global-exclude *.py[cod] __pycache__ *.so
 exclude docs tests .readthedocs.yml
 recursive-exclude tests *.py
