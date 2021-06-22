@@ -36,4 +36,5 @@ TARGET_INCLUDE_DIRECTORIES(${MODNAME}
 # ##############################################################################
 #                                   INSTALL                                    #
 # ##############################################################################
-INSTALL(TARGETS ${MODNAME} DESTINATION ${SUBPATH})
+# installs to phik/lib, set using cmake_install_dir when using pip
+INSTALL(TARGETS ${MODNAME} DESTINATION .)
