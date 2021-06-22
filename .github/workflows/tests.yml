@@ -18,4 +18,4 @@ jobs:
         pip install "pytest>=4.0.2" "pytest-pylint>=0.13.0" "nbconvert>=5.3.1" "jupyter_client>=5.2.3"
     - name: Test with pytest
       run: |
-        pytest tests/phik_python/test_phik.py
+        pytest -v tests/phik_python/test_phik.py
