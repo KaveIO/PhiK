@@ -33,7 +33,3 @@ TARGET_INCLUDE_DIRECTORIES(${MODNAME}
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${SUBPATH}>
 )
-# ##############################################################################
-#                                   INSTALL                                    #
-# ##############################################################################
-INSTALL(TARGETS ${MODNAME} DESTINATION ${SUBPATH})
