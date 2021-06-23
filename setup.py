@@ -13,9 +13,11 @@ modification, are permitted according to the terms listed in the file
 LICENSE.
 """
 
+import re
 import os
 import sys
 import subprocess
+from pathlib import Path
 from warnings import warn
 from setuptools import find_packages
 from setuptools import setup, Extension
@@ -245,6 +247,11 @@ setup_args = {
 
 if __name__ == '__main__':
     write_version_py()
+    # Fix CMake cache issue with in-place builds
+    cmake_cache_path = (Path(__file__).resolve().parent / "build")
+    pip_env_re = "^//.*$\n^[^#].*pip-build-env.*$"
+    for i in cmake_cache_path.rglob("CMakeCache.txt"):
+        i.write_text(re.sub(pip_env_re, "", i.read_text(), flags=re.M))
     try:
         # try building with C++ extension:
         setup(ext_modules=EXTERNAL_MODULES, **setup_args)
