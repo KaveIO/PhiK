@@ -100,7 +100,7 @@ def sim_2d_data_patefield(data: np.ndarray, seed : int = None) -> np.ndarray:
 
     # simulate the data, returned through matrix inplace modification
     _sim_2d_data_patefield(nrows, ncols, nrowt, ncolt, seed, matrix)
-    return matrix.reshape(ncols, nrows)
+    return matrix.reshape(ncols, nrows).T
 
 
 def sim_2d_product_multinominal(data:np.ndarray, axis: int) -> np.ndarray:

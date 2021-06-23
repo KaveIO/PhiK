@@ -173,7 +173,7 @@ class PhiKTest(unittest.TestCase):
         sample = np.random.randint(1, 200, (50, 2))
 
         # call test function
-        res = sim_2d_data_patefield(sample, seed=42)
+        res = sim_2d_data_patefield(sample, seed=42).T
         np.random.set_state(og_state)
         mean0, mean1 = res.mean(1)
         self.assertTrue(np.isclose(mean0, 105.46))
