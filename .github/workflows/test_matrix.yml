@@ -9,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: ${{ matrix.platform }} Python ${{ matrix.python-version }}
     strategy:
       fail-fast: false
       matrix:
@@ -33,5 +34,8 @@ jobs:
     - name: Build and install
       run: pip install --verbose ".[test]"
 
-    - name: Test
-      run: pytest
+    - name: Unit test
+      run: pytest tests/phik_python/test_phik.py -v
+
+    - name: Integration test
+      run: pytest tests/phik_python/integration/test_notebooks.py -v
