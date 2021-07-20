@@ -38,9 +38,7 @@ def fit_test_statistic_distribution(chi2s: Union[list, np.ndarray], nbins:int=50
     Fit the hybrid chi2-distribution to the data to find f.
 
     Perform a binned likelihood fit to the data to find the optimal value for the fraction f in
-
     h(x|f) = N * (f * chi2(x, ndof) + (1-f) * gauss(x, ndof, sqrt(ndof))
-
     The parameter ndof is fixed in the fit using ndof = mean(x). The total number of datapoints N is also fixed.
 
     :param list chi2s: input data - a list of chi2 values
@@ -129,7 +127,7 @@ def significance_from_chi2_asymptotic(values:np.ndarray, chi2:float) -> Tuple[fl
 
 
 def significance_from_chi2_MC(chi2:float, values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
-                              simulation_method:str='multinominal', chi2s=None) -> Tuple[float,float]:
+                              simulation_method:str='multinominal', chi2s=None, n_jobs:int=-1) -> Tuple[float,float]:
     """
     Convert a chi2 into significance using knowledge about the shape of the chi2 distribution of simulated data
 
@@ -137,12 +135,14 @@ def significance_from_chi2_MC(chi2:float, values:np.ndarray, nsim:int=1000, lamb
 
     :param float chi2: chi2 value
     :param list chi2s: provide your own chi2s values (optional)
+    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
     :returns: pvalue, significance
     """
 
     # determine effective number of degrees of freedom using simulation
     if chi2s is None:
-        chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method)
+        chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method,
+                                      n_jobs=n_jobs)
 
     # calculate p_value based on simulation (MC method)
     empirical_p_value = 1. - stats.percentileofscore(chi2s, chi2) / 100.
@@ -152,7 +152,8 @@ def significance_from_chi2_MC(chi2:float, values:np.ndarray, nsim:int=1000, lamb
 
 
 def significance_from_chi2_hybrid(chi2:float, values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
-                                  simulation_method:str='multinominal', chi2s=None) -> Tuple[float,float]:
+                                  simulation_method:str='multinominal', chi2s=None,
+                                  n_jobs:int=-1) -> Tuple[float,float]:
     """
     Convert a chi2 into significance using a hybrid method
 
@@ -169,12 +170,14 @@ def significance_from_chi2_hybrid(chi2:float, values:np.ndarray, nsim:int=1000, 
     :param float chi2: chi2 value
     :param list chi2s: provide your own chi2s values (optional)
     :param float avg_per_bin: average number of data points per bin
+    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
     :returns: p_value, significance
     """
 
     # determine effective number of degrees of freedom using simulation
     if chi2s is None:
-        chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method)
+        chi2s = sim_chi2_distribution(values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method,
+                                      n_jobs=n_jobs)
 
     # average number of records per bin
     avg_per_bin = values.sum() / values.shape[0] * values.shape[1]
@@ -200,8 +203,9 @@ def significance_from_chi2_hybrid(chi2:float, values:np.ndarray, nsim:int=1000, 
     return pvalue_h, zvalue_h
 
 
-def significance_from_hist2d(values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood', simulation_method:str='multinominal',
-                             significance_method:str='hybrid') -> Tuple[float,float]:
+def significance_from_hist2d(values:np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
+                             simulation_method:str='multinominal', significance_method:str='hybrid',
+                             n_jobs:int=-1) -> Tuple[float,float]:
     """
     Calculate the significance of correlation of two variables based on the contingency table
 
@@ -211,6 +215,7 @@ def significance_from_hist2d(values:np.ndarray, nsim:int=1000, lambda_:str='log-
     :param str simulation_method: simulation method. Options: [multinominal, row_product_multinominal, \
      col_product_multinominal, hypergeometric].
     :param str significance_method: significance_method. Options: [asymptotic, MC, hybrid]
+    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
     :return: pvalue, significance
     """
 
@@ -225,13 +230,13 @@ def significance_from_hist2d(values:np.ndarray, nsim:int=1000, lambda_:str='log-
     elif significance_method == 'MC':
         # calculate pvalue based on simulation (MC method)
         pvalue, zvalue = significance_from_chi2_MC(
-            chi2, values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method
+            chi2, values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method, n_jobs=n_jobs
         )
     elif significance_method == 'hybrid':
         # low statistics : calculate pvalue and zvalue using h(x|f) and endof
         # high statistics: calculate pvalue and zvalue using chi2-distribution and endof
         pvalue, zvalue = significance_from_chi2_hybrid(
-            chi2, values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method
+            chi2, values, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method, n_jobs=n_jobs
         )
     else:
         raise NotImplementedError('simulation_method {0:s} is unknown'.format(simulation_method))
@@ -239,9 +244,10 @@ def significance_from_hist2d(values:np.ndarray, nsim:int=1000, lambda_:str='log-
     return pvalue, zvalue
 
 
-def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-likelihood", simulation_method:str='multinominal',
-                                  nsim:int=1000, significance_method:str='hybrid', dropna:bool=True, drop_underflow:bool=True,
-                                  drop_overflow:bool=True) -> pd.DataFrame:
+def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-likelihood",
+                                  simulation_method:str='multinominal', nsim:int=1000, significance_method:str='hybrid',
+                                  dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True,
+                                  n_jobs:int=-1) -> pd.DataFrame:
     """
     Calculate significance of correlation of all variable combinations in the DataFrame
 
@@ -256,6 +262,7 @@ def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-lik
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
+    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
     :return: significance matrix
     """
 
@@ -283,7 +290,7 @@ def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-lik
         datahist = datahist.values
         pvalue, zvalue = significance_from_hist2d(
             datahist, nsim=nsim, lambda_=lambda_, simulation_method=simulation_method,
-            significance_method=significance_method
+            significance_method=significance_method, n_jobs=n_jobs
         )
         signifs.append((c0, c1, zvalue))
 
@@ -299,9 +306,10 @@ def significance_from_rebinned_df(data_binned:pd.DataFrame, lambda_:str="log-lik
     return significance_overview
 
 
-def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="log-likelihood", simulation_method:str='multinominal',
-                        nsim:int=1000, significance_method:str='hybrid', bins:Union[int, list, np.ndarray, dict]=10, dropna:bool=True,
-                        drop_underflow:bool=True, drop_overflow:bool=True, verbose:bool=True) -> pd.DataFrame:
+def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="log-likelihood",
+                        simulation_method:str='multinominal', nsim:int=1000, significance_method:str='hybrid',
+                        bins:Union[int, list, np.ndarray, dict]=10, dropna:bool=True, drop_underflow:bool=True,
+                        drop_overflow:bool=True, verbose:bool=True, n_jobs:int=-1) -> pd.DataFrame:
     """
     Calculate significance of correlation of all variable combinations in the dataframe
 
@@ -322,6 +330,7 @@ def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="l
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
     :param bool verbose: if False, do not print all interval columns that are guessed
+    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
     :return: significance matrix
     """
 
@@ -331,17 +340,19 @@ def significance_matrix(df:pd.DataFrame, interval_cols:list=None, lambda_:str="l
     df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
 
     data_binned = bin_data(df_clean, interval_cols_clean, bins=bins)
+
     return significance_from_rebinned_df(
         data_binned, lambda_=lambda_, simulation_method=simulation_method, nsim=nsim,
         significance_method=significance_method, dropna=dropna,
-        drop_underflow=drop_underflow, drop_overflow=drop_overflow
+        drop_underflow=drop_underflow, drop_overflow=drop_overflow, n_jobs=n_jobs
     )
 
 
-def significance_from_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Series], num_vars=None, bins:Union[int,list,np.ndarray,dict]=10,
-                            quantile:bool=False, lambda_:str= "log-likelihood", nsim:int=1000,
-                            significance_method:str='hybrid', simulation_method:str='multinominal', dropna:bool=True,
-                            drop_underflow:bool=True, drop_overflow:bool=True) -> Tuple[float,float]:
+def significance_from_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Series], num_vars=None,
+                            bins:Union[int,list,np.ndarray,dict]=10, quantile:bool=False, lambda_:str= "log-likelihood",
+                            nsim:int=1000, significance_method:str='hybrid', simulation_method:str='multinominal',
+                            dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True,
+                            n_jobs:int=-1) -> Tuple[float,float]:
     """
     Calculate the significance of correlation
 
@@ -364,6 +375,7 @@ def significance_from_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
+    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
     :return: p-value, significance
     """
     if num_vars is None:
@@ -377,13 +389,15 @@ def significance_from_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray
 
     return significance_from_binned_array(
         x, y, lambda_=lambda_, significance_method=significance_method, nsim=nsim,
-        simulation_method=simulation_method, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow
+        simulation_method=simulation_method, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow,
+        n_jobs=n_jobs
     )
 
 
-def significance_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Series], lambda_:str="log-likelihood", significance_method:str='hybrid', nsim:int=1000,
+def significance_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Series],
+                                   lambda_:str="log-likelihood", significance_method:str='hybrid', nsim:int=1000,
                                    simulation_method:str='multinominal', dropna:bool=True, drop_underflow:bool=True,
-                                   drop_overflow:bool=True) -> Tuple[float, float]:
+                                   drop_overflow:bool=True, n_jobs:int=-1) -> Tuple[float, float]:
     """
     Calculate the significance of correlation
 
@@ -402,6 +416,7 @@ def significance_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
+    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
     :return: p-value, significance
     """
 
@@ -425,5 +440,6 @@ def significance_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.
         return np.nan, np.nan
 
     return significance_from_hist2d(
-        hist2d, lambda_=lambda_, significance_method=significance_method, simulation_method=simulation_method, nsim=nsim
+        hist2d, lambda_=lambda_, significance_method=significance_method, simulation_method=simulation_method,
+        nsim=nsim, n_jobs=n_jobs
     )

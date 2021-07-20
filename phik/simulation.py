@@ -18,7 +18,6 @@ from joblib import Parallel, delayed
 
 from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
-from .config import n_cores as NCORES
 
 try:
     from phik.simcore import _sim_2d_data_patefield
@@ -44,8 +43,8 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     """
     Simulate a 2 dimensional dataset given a 2 dimensional pdf
 
-    :param array-like hist: contingency table, which contains the observed number of occurrences in each category. \
-    This table is used as probability density function.
+    :param array-like hist: contingency table, which contains the observed number of occurrences in each category.
+        This table is used as probability density function.
     :param int ndata: number of simulations
     :return: simulated data
     """
@@ -153,30 +152,33 @@ def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
 
 
 def sim_chi2_distribution(values: np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
-                          simulation_method:str='multinominal', alt_hypothesis:bool=False) -> list:
+                          simulation_method:str='multinominal', alt_hypothesis:bool=False, n_jobs:int=-1) -> list:
     """
     Simulate 2D data and calculate the chi-square statistic for each simulated dataset.
 
     :param values: The contingency table. The table contains the observed number of occurrences in each category
     :param int nsim: number of simulations (optional, default=1000)
-    :param str simulation_method: sampling method. Options: [multinominal, hypergeometric, row_product_multinominal,\
-     col_product_multinominal]
+    :param str simulation_method: sampling method. Options: [multinominal, hypergeometric, row_product_multinominal,
+        col_product_multinominal]
     :param str lambda_: test statistic. Available options are [pearson, log-likelihood].
     :param bool alt_hypothesis: if True, simulate values directly, and not its dependent frequency estimates.
+    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
     :returns chi2s: list of chi2 values for each simulated dataset
     """
     exp_dep = get_dependent_frequency_estimates(values) if not alt_hypothesis else values
 
-    if NCORES > 1:
-        chi2s = Parallel(n_jobs=NCORES)(delayed(_simulate_and_fit)(exp_dep, simulation_method, lambda_) for _ in range(nsim))
-    else:
+    if n_jobs == 1:
         chi2s = [_simulate_and_fit(exp_dep, simulation_method, lambda_) for _ in range(nsim)]
+    else:
+        chi2s = Parallel(n_jobs=n_jobs)(delayed(_simulate_and_fit)(exp_dep, simulation_method, lambda_)
+                                        for _ in range(nsim))
 
     return chi2s
 
 
 @jit(forceobj=True)
-def _simulate_and_fit(exp_dep: np.ndarray, simulation_method: str='multinominal', lambda_:str='log-likelihood') -> float:
+def _simulate_and_fit(exp_dep: np.ndarray, simulation_method: str='multinominal',
+                      lambda_:str='log-likelihood') -> float:
     """split off simulate function to allow for parallellization"""
     simdata = sim_data(exp_dep, method=simulation_method)
     simchi2 = get_chi2_using_dependent_frequency_estimates(simdata, lambda_)
