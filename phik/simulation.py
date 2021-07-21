@@ -27,17 +27,6 @@ except ImportError:
 
 NUMPY_INT_MAX = np.iinfo(np.int32).max - 1
 
-try:
-    from numba import jit
-except ImportError:
-    def jit(func=None, **kwargs):
-        if func:  # Called without other arguments, just return the function
-            return func
-        # Otherwise return a no-op decorator
-        def decorator(func):
-            return func
-        return decorator
-
 
 def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     """
@@ -120,7 +109,6 @@ def sim_2d_product_multinominal(data:np.ndarray, axis: int) -> np.ndarray:
         raise NotImplementedError("Axis should be 0 (row) or 1 (column).")
 
 
-@jit(forceobj=True)
 def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
     """
     Simulate a 2 dimensional dataset given a 2 dimensional pdf
@@ -176,7 +164,6 @@ def sim_chi2_distribution(values: np.ndarray, nsim:int=1000, lambda_:str='log-li
     return chi2s
 
 
-@jit(forceobj=True)
 def _simulate_and_fit(exp_dep: np.ndarray, simulation_method: str='multinominal',
                       lambda_:str='log-likelihood') -> float:
     """split off simulate function to allow for parallellization"""

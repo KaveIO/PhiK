@@ -41,7 +41,7 @@ NAME = 'phik'
 MAJOR = 0
 REVISION = 12
 PATCH = 0
-DEV = True
+DEV = False
 
 # note: also update README.rst
 
@@ -66,9 +66,6 @@ REQUIREMENTS = [
 ]
 
 EXTRA_REQUIREMENTS = {
-    'numba': [
-        'numba>=0.38.1',
-    ],
     'test': TEST_REQUIREMENTS,
 }
 

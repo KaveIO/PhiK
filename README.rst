@@ -2,7 +2,7 @@
 Phi_K Correlation Analyzer Library
 ==================================
 
-* Version: 0.11.2. Released: Mar 2021
+* Version: 0.12.0. Released: Jul 2021
 * Documentation: https://phik.readthedocs.io
 * Repository: https://github.com/kaveio/phik
 * Publication: `[offical] <https://www.sciencedirect.com/science/article/abs/pii/S0167947320301341>`_ `[arxiv pre-print] <https://arxiv.org/abs/1811.11440>`_
@@ -56,16 +56,6 @@ You can now use the package in Python with:
 
 **Congratulations, you are now ready to use the PhiK correlation analyzer library!**
 
-Speedups
---------
-
-Phi_K can use the Numba JIT library for faster computation of certain operations.
-You can either install Numba separately or use the `numba` extra specifier while installing:
-
-.. code-block:: bash
-
-  $ pip install phik[numba]
-
 C++ Extension
 -------------
 
@@ -73,8 +63,8 @@ Phi_K contains an optional C++ extension to compute the significance matrix usin
 
 Note that the PyPi distributed wheels contain a pre-build extension for Linux, MacOS and Windows.
 
-The setup will attempt to build and install the extension, if it fails it will install without the extension.
-Using the `hypergeometric` method without the extension will trigger a NotImplementedError.
+A manual (pip) setup will attempt to build and install the extension, if it fails it will install without the extension.
+If so, using the `hypergeometric` method without the extension will trigger a NotImplementedError.
 
 Compiler requirements through Pybind11:
 
@@ -136,4 +126,4 @@ Contact and support
 
 * Issues and Ideas: https://github.com/kaveio/phik/issues
 
-Please note that KPMG provides support only on a best-effort basis.
+Please note that support is (only) provided on a best-effort basis.
