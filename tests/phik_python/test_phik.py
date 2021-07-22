@@ -21,6 +21,9 @@ import pandas as pd
 import numpy as np
 from phik import resources, bivariate
 from phik.simulation import sim_2d_data_patefield
+from phik.binning import auto_bin_data
+from phik.phik import phik_observed_vs_expected_from_rebinned_df, phik_from_hist2d
+from phik.statistics import get_dependent_frequency_estimates
 
 
 @pytest.mark.filterwarnings("ignore:Using or importing the ABCs from")
@@ -36,6 +39,36 @@ class PhiKTest(unittest.TestCase):
         phik = bivariate.phik_from_chi2(chi2, 1000, 10, 10)
         self.assertTrue( np.isclose(phik, 0.5, 1e-6) )
 
+    def test_phik_from_hist2d(self):
+        """Test the calculation of Phi_K value from hist2d"""
+
+        # open fake car insurance data
+        df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
+
+        # create contingency matrix
+        cols = ['mileage','car_size']
+        interval_cols = ['mileage']
+        observed = df[cols].hist2d(interval_cols=interval_cols)
+
+        phik_value = phik_from_hist2d(observed)
+        self.assertAlmostEqual(phik_value, 0.7685888294891855)
+
+    def test_phik_observed_vs_expected_from_hist2d(self):
+        """Test the calculation of Phi_K value from hist2d"""
+
+        # open fake car insurance data
+        df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
+
+        # create contingency matrix
+        cols = ['mileage','car_size']
+        interval_cols = ['mileage']
+
+        observed = df[cols].hist2d(interval_cols=interval_cols).values
+        expected = get_dependent_frequency_estimates(observed)
+
+        phik_value = phik_from_hist2d(observed=observed, expected=expected)
+        self.assertAlmostEqual(phik_value, 0.7685888294891855)
+
     def test_phik_matrix(self):
         """Test the calculation of Phi_K"""
         # open fake car insurance data
@@ -50,6 +83,22 @@ class PhiKTest(unittest.TestCase):
         self.assertTrue(np.isclose(phik_corr.values[cols.index('area'), cols.index('car_color')], 0.5904561614620166))
         self.assertTrue(np.isclose(phik_corr.values[cols.index('mileage'), cols.index('car_size')], 0.768588987856336))
         self.assertTrue(np.isclose(phik_corr.values[cols.index('car_size'), cols.index('mileage')], 0.768588987856336))
+
+    def test_phik_matrix_observed_vs_expected(self):
+        """Test the calculation of Phi_K"""
+        # open fake car insurance data
+        df = pd.read_csv( resources.fixture('fake_insurance_data.csv.gz') )
+        cols = list(df.columns)
+
+        # get the phi_k correlation matrix between all variables
+        binned_df, _ = auto_bin_data(df)
+        phik_corr = phik_observed_vs_expected_from_rebinned_df(binned_df, binned_df)
+
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('car_color'), cols.index('area')], 0.))
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('area'), cols.index('car_color')], 0.))
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('mileage'), cols.index('car_size')], 0.))
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('car_size'), cols.index('mileage')], 0.))
+        self.assertTrue(np.isclose(phik_corr.values[cols.index('car_size'), cols.index('car_size')], 1.))
 
     def test_global_phik(self):
         """Test the calculation of global Phi_K values"""
