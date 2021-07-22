@@ -16,10 +16,10 @@ from typing import List, Tuple, Union, Optional
 
 import numpy as np
 import pandas as pd
-import warnings
 
 from phik import definitions as defs
 from phik.utils import array_like_to_dataframe, guess_interval_cols
+from phik.data_quality import dq_check_nunique_values
 
 
 def bin_edges(arr: Union[np.ndarray, list, pd.Series], nbins:int, quantile:bool = False) -> np.ndarray:
@@ -117,6 +117,34 @@ def bin_data(data: pd.DataFrame, cols: Union[list, np.ndarray, tuple]=(), bins:U
         return binned_data, bins_dict
 
     return binned_data
+
+
+def auto_bin_data(df: pd.DataFrame, interval_cols: Optional[list] = None, bins: Union[int, list, np.ndarray, dict] = 10,
+                  quantile: bool = False, dropna: bool = True, verbose: bool = True) -> pd.DataFrame:
+    """
+    Index the input DataFrame with automatic bin_edges and interval columns.
+
+    :param pd.DataFrame data_binned: input data
+    :param list interval_cols: column names of columns with interval variables.
+    :param bins: number of bins, or a list of bin edges (same for all columns), or a dictionary where per column
+        the bins are specified. (default=10)\
+        E.g.: bins = {'mileage':5, 'driver_age':[18,25,35,45,55,65,125]}
+    :param quantile: when bins is an integer, uniform bins (False) or bins based on quantiles (True)
+    :param bool dropna: remove NaN values with True
+    :param bool verbose: if False, do not print all interval columns that are guessed
+    :return: phik correlation matrix
+    """
+    # guess interval columns
+    if interval_cols is None:
+        interval_cols = guess_interval_cols(df, verbose)
+
+    # clean the data
+    df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
+
+    # perform rebinning
+    data_binned, binning_dict = bin_data(df_clean, cols=interval_cols_clean, bins=bins, quantile=quantile,
+                                         retbins=True)
+    return data_binned, binning_dict
 
 
 def create_correlation_overview_table(vals: List[Tuple[str, str, float]]) -> pd.DataFrame:

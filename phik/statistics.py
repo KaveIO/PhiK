@@ -33,7 +33,7 @@ def get_dependent_frequency_estimates(vals: np.ndarray) -> np.ndarray:
     return stats.contingency.expected_freq(vals)
 
 
-def get_chi2_using_dependent_frequency_estimates(vals: np.ndarray, lambda_:str = 'log-likelihood') -> float:
+def get_chi2_using_dependent_frequency_estimates(vals: np.ndarray, lambda_:str='log-likelihood') -> float:
     """
     Chi-square test of independence of variables in a contingency table.
 
@@ -41,7 +41,7 @@ def get_chi2_using_dependent_frequency_estimates(vals: np.ndarray, lambda_:str =
     marginal sums of the table, i.e. dependent frequency estimates.
 
     :param vals: The contingency table. The table contains the observed number of occurrences in each category
-    :returns chi2: 
+    :returns test_statistic: the test statistic value
     """
 
     values = vals[:]
@@ -52,9 +52,36 @@ def get_chi2_using_dependent_frequency_estimates(vals: np.ndarray, lambda_:str =
     values = values.T[~np.all(values.T == 0, axis=1)].T
 
     # use existing scipy functionality
-    exp, _, _, _ = stats.chi2_contingency(values, lambda_=lambda_)
+    test_statistic, _, _, _ = stats.chi2_contingency(values, lambda_=lambda_)
 
-    return exp
+    return test_statistic
+
+
+def get_pearson_chi_square(observed: np.ndarray, expected: np.ndarray=None, normalize: bool=True) -> float:
+    """ Calculate pearson chi square between observed and expected 2d contingency matrix
+
+    :param observed: The observed contingency table. The table contains the observed number of occurrences in each cell.
+    :param expected: The expected contingency table. The table contains the expected number of occurrences in each cell.
+    :param bool normalize: normalize expected frequencies, default is True.
+    :return: the pearson chi2 value
+    """
+    observed = np.asarray(observed)
+    if np.any(observed < 0):
+        raise ValueError("All values in `observed` must be non-negative.")
+    if observed.size == 0:
+        raise ValueError("No data; `observed` has size 0.")
+
+    if expected is None:
+        expected = get_dependent_frequency_estimates(observed)
+    expected = np.asarray(expected)
+
+    # important to ensure that observed and expected have same normalization
+    if normalize:
+        expected = expected * (np.sum(observed) / np.sum(expected))
+
+    terms = np.divide((observed.astype(np.float64) - expected) ** 2, expected,
+                      out=np.zeros_like(expected), where=expected != 0)
+    return np.sum(terms)
 
 
 def estimate_ndof(chi2values: Union[list, np.ndarray]) -> float:

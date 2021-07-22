@@ -140,7 +140,7 @@ def sim_data(data:np.ndarray, method:str='multinominal') -> np.ndarray:
 
 
 def sim_chi2_distribution(values: np.ndarray, nsim:int=1000, lambda_:str='log-likelihood',
-                          simulation_method:str='multinominal', alt_hypothesis:bool=False, n_jobs:int=-1) -> list:
+                          simulation_method:str='multinominal', alt_hypothesis:bool=False, njobs:int=-1) -> list:
     """
     Simulate 2D data and calculate the chi-square statistic for each simulated dataset.
 
@@ -150,15 +150,15 @@ def sim_chi2_distribution(values: np.ndarray, nsim:int=1000, lambda_:str='log-li
         col_product_multinominal]
     :param str lambda_: test statistic. Available options are [pearson, log-likelihood].
     :param bool alt_hypothesis: if True, simulate values directly, and not its dependent frequency estimates.
-    :param int n_jobs: number of parallel jobs used for simulation. default is -1.
+    :param int njobs: number of parallel jobs used for simulation. default is -1.
     :returns chi2s: list of chi2 values for each simulated dataset
     """
     exp_dep = get_dependent_frequency_estimates(values) if not alt_hypothesis else values
 
-    if n_jobs == 1:
+    if njobs == 1:
         chi2s = [_simulate_and_fit(exp_dep, simulation_method, lambda_) for _ in range(nsim)]
     else:
-        chi2s = Parallel(n_jobs=n_jobs)(delayed(_simulate_and_fit)(exp_dep, simulation_method, lambda_)
+        chi2s = Parallel(n_jobs=njobs)(delayed(_simulate_and_fit)(exp_dep, simulation_method, lambda_)
                                         for _ in range(nsim))
 
     return chi2s

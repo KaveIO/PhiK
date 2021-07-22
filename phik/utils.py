@@ -31,3 +31,45 @@ def guess_interval_cols(df: pd.DataFrame, verbose:bool=False) -> list:
     if not isinstance(interval_cols, list):
         raise ValueError('Could not guess interval columns')
     return interval_cols
+
+
+def make_shapes_equal(observed: pd.DataFrame, expected: pd.DataFrame) -> pd.DataFrame:
+    """ Make observed and expected (pandas) histograms equal in shape
+
+    Sometimes expected histogram shape need filling / pruning to make its shape equal to observed. Give expected the
+    same number of columns and rows. Needed for proper histogram comparison.
+
+    :param pd.DataFrame observed: The observed contingency table. The table contains the observed number of occurrences in each cell.
+    :param pd.DataFrame expected: The expected contingency table. The table contains the expected number of occurrences in each cell.
+    :return: expected frequencies, having the same shape as observed
+    """
+    # columns
+    o_cols = observed.columns.tolist()
+    e_cols = expected.columns.tolist()
+    o_cols_missing = list(set(e_cols) - set(o_cols))
+    e_cols_missing = list(set(o_cols) - set(e_cols))
+    # index
+    o_idx = observed.index.tolist()
+    e_idx = expected.index.tolist()
+    o_idx_missing = list(set(e_idx) - set(o_idx))
+    e_idx_missing = list(set(o_idx) - set(e_idx))
+
+    # make expected columns equal to observed
+    for c in o_cols_missing:
+        observed[c] = 0.0
+    for c in e_cols_missing:
+        expected[c] = 0.0
+    observed.columns = sorted(observed.columns)
+    expected.columns = sorted(expected.columns)
+    # this should always be a match now
+    assert len(observed.columns) == len(expected.columns)
+
+    # make expected index equal to observed
+    for i in o_idx_missing:
+        observed.loc[i] = np.zeros(len(observed.columns))
+    for i in e_idx_missing:
+        expected.loc[i] = np.zeros(len(expected.columns))
+    # this should always be a match now
+    assert len(observed.index) == len(expected.index)
+
+    return expected
