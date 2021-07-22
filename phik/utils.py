@@ -6,7 +6,7 @@ import numpy as np
 
 def array_like_to_dataframe(
     x: Union[pd.Series, list, np.ndarray], y: Union[pd.Series, list, np.ndarray]
-):
+) -> pd.DataFrame:
     """Concat two array-like data structures into a DataFrame
 
     :param x: pd.Series, list or np.ndarray
