@@ -13,6 +13,7 @@ modification, are permitted according to the terms listed in the file
 LICENSE.
 """
 
+
 def phik_trial():
     """Run Phi_K tests.
 
@@ -26,6 +27,6 @@ def phik_trial():
 
     # ['--pylint'] +
     # -r xs shows extra info on skips and xfails.
-    default_options = ['-rxs']
+    default_options = ["-rxs"]
     args = sys.argv[1:] + default_options
     sys.exit(pytest.main(args))

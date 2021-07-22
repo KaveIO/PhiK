@@ -26,14 +26,16 @@ def get_dependent_frequency_estimates(vals: np.ndarray) -> np.ndarray:
     Calculation is based on the marginal sums of the table, i.e. dependent frequency estimates.
     :param vals: The contingency table. The table contains the observed number of occurrences in each category
 
-    :returns exp: expected frequencies 
+    :returns exp: expected frequencies
     """
 
     # use existing scipy functionality
     return stats.contingency.expected_freq(vals)
 
 
-def get_chi2_using_dependent_frequency_estimates(vals: np.ndarray, lambda_:str='log-likelihood') -> float:
+def get_chi2_using_dependent_frequency_estimates(
+    vals: np.ndarray, lambda_: str = "log-likelihood"
+) -> float:
     """
     Chi-square test of independence of variables in a contingency table.
 
@@ -57,8 +59,10 @@ def get_chi2_using_dependent_frequency_estimates(vals: np.ndarray, lambda_:str='
     return test_statistic
 
 
-def get_pearson_chi_square(observed: np.ndarray, expected: np.ndarray=None, normalize: bool=True) -> float:
-    """ Calculate pearson chi square between observed and expected 2d contingency matrix
+def get_pearson_chi_square(
+    observed: np.ndarray, expected: np.ndarray = None, normalize: bool = True
+) -> float:
+    """Calculate pearson chi square between observed and expected 2d contingency matrix
 
     :param observed: The observed contingency table. The table contains the observed number of occurrences in each cell.
     :param expected: The expected contingency table. The table contains the expected number of occurrences in each cell.
@@ -79,8 +83,12 @@ def get_pearson_chi_square(observed: np.ndarray, expected: np.ndarray=None, norm
     if normalize:
         expected = expected * (np.sum(observed) / np.sum(expected))
 
-    terms = np.divide((observed.astype(np.float64) - expected) ** 2, expected,
-                      out=np.zeros_like(expected), where=expected != 0)
+    terms = np.divide(
+        (observed.astype(np.float64) - expected) ** 2,
+        expected,
+        out=np.zeros_like(expected),
+        where=expected != 0,
+    )
     return np.sum(terms)
 
 
@@ -102,7 +110,7 @@ def estimate_simple_ndof(observed: np.ndarray) -> int:
     """
     Simple estimation of the effective number of degrees of freedom.
 
-    This equals the nominal calculation for ndof minus the number of empty bins in the 
+    This equals the nominal calculation for ndof minus the number of empty bins in the
     expected contingency table.
 
     :param observed: numpy array of observed cell counts
@@ -111,7 +119,13 @@ def estimate_simple_ndof(observed: np.ndarray) -> int:
 
     # use existing scipy functionality
     expected = stats.contingency.expected_freq(observed)
-    endof = expected.size - np.sum(expected.shape) + expected.ndim - 1 - (expected==0).sum()
+    endof = (
+        expected.size
+        - np.sum(expected.shape)
+        + expected.ndim
+        - 1
+        - (expected == 0).sum()
+    )
     # require minimum number of degrees of freedom
     if endof < 0:
         endof = 0
@@ -122,12 +136,12 @@ def theoretical_ndof(observed: np.ndarray) -> int:
     """
     Simple estimation of the effective number of degrees of freedom.
 
-    This equals the nominal calculation for ndof minus the number of empty bins in the 
+    This equals the nominal calculation for ndof minus the number of empty bins in the
     expected contingency table.
 
     :param observed: numpy array of observed cell counts
     :returns: theoretical ndof
-    """    
+    """
 
     return observed.size - np.sum(observed.shape) + observed.ndim - 1
 
@@ -152,12 +166,12 @@ def z_from_logp(logp: float, flip_sign: bool = False) -> float:
     if p_value == 0:
         # kicks in here when Z > 37
         # approach valid when ~ Z > 1.5.
-        u = -2.*np.log(2 * np.pi) - 2.*logp
+        u = -2.0 * np.log(2 * np.pi) - 2.0 * logp
         z_value = np.sqrt(u - np.log(u))
     else:
         z_value = -stats.norm.ppf(p_value)
 
     if flip_sign:
-        z_value *= -1.
+        z_value *= -1.0
 
     return z_value

@@ -21,7 +21,9 @@ import pandas as pd
 import numpy as np
 
 
-def dq_check_nunique_values(df: pd.DataFrame, interval_cols: list, dropna:bool=True) -> Tuple[pd.DataFrame, list]:
+def dq_check_nunique_values(
+    df: pd.DataFrame, interval_cols: list, dropna: bool = True
+) -> Tuple[pd.DataFrame, list]:
     """
     Basic data quality checks per column in a DataFrame.
 
@@ -52,12 +54,13 @@ def dq_check_nunique_values(df: pd.DataFrame, interval_cols: list, dropna:bool=T
     interval_cols = [col for col in interval_cols if col in df.columns]
 
     # check non-interval variable for number of unique values
-    for col in sorted(list(set(df.columns)-set(interval_cols))):
+    for col in sorted(list(set(df.columns) - set(interval_cols))):
         if df[col].nunique() > 1000:
             warnings.warn(
-                'The number of unique values of variable {0:s} is large: {1:d}. Are you sure this is '
-                'not an interval variable? Analysis for pairs of variables including {0:s} can be slow.'
-                .format(col, df[col].nunique())
+                "The number of unique values of variable {0:s} is large: {1:d}. Are you sure this is "
+                "not an interval variable? Analysis for pairs of variables including {0:s} can be slow.".format(
+                    col, df[col].nunique()
+                )
             )
 
     drop_cols = []
@@ -67,8 +70,9 @@ def dq_check_nunique_values(df: pd.DataFrame, interval_cols: list, dropna:bool=T
         if df[col].nunique() < 2:
             drop_cols.append(col)
             warnings.warn(
-                'Not enough unique value for variable {0:s} for analysis {1:d}. Dropping this column'
-                .format(col, df[col].nunique())
+                "Not enough unique value for variable {0:s} for analysis {1:d}. Dropping this column".format(
+                    col, df[col].nunique()
+                )
             )
 
     # check non-interval values whether there are at least two different values OR 1 value and NaN if dropna==False
@@ -76,8 +80,9 @@ def dq_check_nunique_values(df: pd.DataFrame, interval_cols: list, dropna:bool=T
         if df[col].nunique() == 0 or (df[col].nunique() == 1 and dropna):
             drop_cols.append(col)
             warnings.warn(
-                'Not enough unique value for variable {0:s} for analysis {1:d}. Dropping this column'
-                .format(col, df[col].nunique())
+                "Not enough unique value for variable {0:s} for analysis {1:d}. Dropping this column".format(
+                    col, df[col].nunique()
+                )
             )
 
     df_clean = df.copy()
@@ -105,20 +110,24 @@ def dq_check_hist2d(hist2d: np.ndarray) -> bool:
 
     if 0 in hist2d.shape or 1 in hist2d.shape:
         warnings.warn(
-            'Too few unique values for variable x ({0:d}) or y ({1:d})'.format(hist2d.shape[0], hist2d.shape[1])
+            "Too few unique values for variable x ({0:d}) or y ({1:d})".format(
+                hist2d.shape[0], hist2d.shape[1]
+            )
         )
         return False
     if hist2d.shape[0] > 1000:
         warnings.warn(
-            'The number of unique values of variable x is large: {0:d}. '
-            'Are you sure this is not an interval variable? Analysis might be slow.'
-            .format(hist2d.shape[0])
+            "The number of unique values of variable x is large: {0:d}. "
+            "Are you sure this is not an interval variable? Analysis might be slow.".format(
+                hist2d.shape[0]
+            )
         )
     if hist2d.shape[1] > 1000:
         warnings.warn(
-            'The number of unique values of variable y is large: {0:d}. '
-            'Are you sure this is not an interval variable? Analysis might be slow.'
-            .format(hist2d.shape[0])
+            "The number of unique values of variable y is large: {0:d}. "
+            "Are you sure this is not an interval variable? Analysis might be slow.".format(
+                hist2d.shape[0]
+            )
         )
 
     return True

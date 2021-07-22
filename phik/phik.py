@@ -22,7 +22,11 @@ from numpy.linalg import inv
 
 from phik import definitions as defs
 from .bivariate import phik_from_chi2
-from .statistics import get_chi2_using_dependent_frequency_estimates, estimate_simple_ndof, get_pearson_chi_square
+from .statistics import (
+    get_chi2_using_dependent_frequency_estimates,
+    estimate_simple_ndof,
+    get_pearson_chi_square,
+)
 from .binning import create_correlation_overview_table, bin_data, auto_bin_data
 from .data_quality import dq_check_hist2d
 from .utils import array_like_to_dataframe, make_shapes_equal
@@ -44,7 +48,7 @@ def spark_phik_matrix_from_hist2d_dict(spark_context, hist_dict: dict):
 
     for k, v in hist_dict.items():
         if not isinstance(v, np.ndarray):
-            raise TypeError('hist_dict should be a dictionary of 2d numpy arrays.')
+            raise TypeError("hist_dict should be a dictionary of 2d numpy arrays.")
 
     hist_list = list(hist_dict.items())
     hist_rdd = spark_context.parallelize(hist_list)
@@ -62,7 +66,7 @@ def _phik_from_row(row: Tuple[str, np.ndarray]) -> Tuple[str, str, float]:
     """
 
     key, grid = row
-    c = key.split(':')
+    c = key.split(":")
     if len(c) == 2 and c[0] == c[1]:
         return c[0], c[1], 1.0
     try:
@@ -72,12 +76,14 @@ def _phik_from_row(row: Tuple[str, np.ndarray]) -> Tuple[str, str, float]:
     return c[0], c[1], phik_value
 
 
-def phik_from_hist2d(observed:np.ndarray, noise_correction:bool=True, expected:np.ndarray=None) -> float:
+def phik_from_hist2d(
+    observed: np.ndarray, noise_correction: bool = True, expected: np.ndarray = None
+) -> float:
     """
     correlation coefficient of bivariate gaussian derived from chi2-value
-    
+
     Chi2-value gets converted into correlation coefficient of bivariate gauss
-    with correlation value rho, assuming giving binning and number of records. 
+    with correlation value rho, assuming giving binning and number of records.
     Correlation coefficient value is between 0 and 1.
 
     Bivariate gaussian's range is set to [-5,5] by construction.
@@ -93,10 +99,13 @@ def phik_from_hist2d(observed:np.ndarray, noise_correction:bool=True, expected:n
         expected = expected.values
 
     # chi2 contingency test
-    chi2 = get_chi2_using_dependent_frequency_estimates(observed, lambda_='pearson') if expected is None else \
-        get_pearson_chi_square(observed, expected)
+    chi2 = (
+        get_chi2_using_dependent_frequency_estimates(observed, lambda_="pearson")
+        if expected is None
+        else get_pearson_chi_square(observed, expected)
+    )
 
-    # noise pedestal 
+    # noise pedestal
     pedestal = estimate_simple_ndof(observed) if noise_correction else 0
     if pedestal < 0:
         pedestal = 0
@@ -105,8 +114,14 @@ def phik_from_hist2d(observed:np.ndarray, noise_correction:bool=True, expected:n
     return phik_from_chi2(chi2, observed.sum(), *observed.shape, pedestal=pedestal)
 
 
-def phik_from_rebinned_df(data_binned: pd.DataFrame, noise_correction:bool=True, dropna:bool=True,
-                          drop_underflow:bool=True, drop_overflow:bool=True, njobs:int=-1) -> pd.DataFrame:
+def phik_from_rebinned_df(
+    data_binned: pd.DataFrame,
+    noise_correction: bool = True,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    njobs: int = -1,
+) -> pd.DataFrame:
     """
     Correlation matrix of bivariate gaussian derived from chi2-value
 
@@ -138,17 +153,21 @@ def phik_from_rebinned_df(data_binned: pd.DataFrame, noise_correction:bool=True,
 
     # cache column order (https://github.com/KaveIO/PhiK/issues/1)
     column_order = data_binned.columns
-    
+
     if njobs == 1:
         # Useful when for instance using cProfiler: https://docs.python.org/3/library/profile.html
         phik_list = [
             _calc_phik(co, data_binned[list(co)], noise_correction)
-            for co in itertools.combinations_with_replacement(data_binned.columns.values, 2)
+            for co in itertools.combinations_with_replacement(
+                data_binned.columns.values, 2
+            )
         ]
     else:
         phik_list = Parallel(n_jobs=njobs)(
             delayed(_calc_phik)(co, data_binned[list(co)], noise_correction)
-            for co in itertools.combinations_with_replacement(data_binned.columns.values, 2)
+            for co in itertools.combinations_with_replacement(
+                data_binned.columns.values, 2
+            )
         )
 
     if len(phik_list) == 0:
@@ -163,7 +182,9 @@ def phik_from_rebinned_df(data_binned: pd.DataFrame, noise_correction:bool=True,
     return phik_overview
 
 
-def _calc_phik(comb: tuple, data_binned: pd.DataFrame, noise_correction: bool) -> Tuple[str, str, float]:
+def _calc_phik(
+    comb: tuple, data_binned: pd.DataFrame, noise_correction: bool
+) -> Tuple[str, str, float]:
     """Split off calculation of phik for parallel processing
 
     :param tuple comb: union of two string columns
@@ -187,9 +208,18 @@ def _calc_phik(comb: tuple, data_binned: pd.DataFrame, noise_correction: bool) -
     return c0, c1, phikvalue
 
 
-def phik_matrix(df:pd.DataFrame, interval_cols:Optional[list]=None, bins:Union[int,list,np.ndarray,dict]=10,
-                quantile:bool=False, noise_correction:bool=True, dropna:bool=True, drop_underflow:bool=True,
-                drop_overflow:bool=True, verbose:bool=True, njobs:int=-1) -> pd.DataFrame:
+def phik_matrix(
+    df: pd.DataFrame,
+    interval_cols: Optional[list] = None,
+    bins: Union[int, list, np.ndarray, dict] = 10,
+    quantile: bool = False,
+    noise_correction: bool = True,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    verbose: bool = True,
+    njobs: int = -1,
+) -> pd.DataFrame:
     """
     Correlation matrix of bivariate gaussian derived from chi2-value
 
@@ -215,17 +245,32 @@ def phik_matrix(df:pd.DataFrame, interval_cols:Optional[list]=None, bins:Union[i
     :return: phik correlation matrix
     """
 
-    data_binned, binning_dict = auto_bin_data(df=df, interval_cols=interval_cols, bins=bins, quantile=quantile,
-                                              dropna=dropna, verbose=verbose)
+    data_binned, binning_dict = auto_bin_data(
+        df=df,
+        interval_cols=interval_cols,
+        bins=bins,
+        quantile=quantile,
+        dropna=dropna,
+        verbose=verbose,
+    )
     return phik_from_rebinned_df(
-        data_binned, noise_correction, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow,
-        njobs=njobs
+        data_binned,
+        noise_correction,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
+        njobs=njobs,
     )
 
 
-def global_phik_from_rebinned_df(data_binned:pd.DataFrame, noise_correction:bool=True, dropna:bool=True,
-                                 drop_underflow:bool=True, drop_overflow:bool=True,
-                                 njobs:int=-1) -> Tuple[np.ndarray, np.ndarray]:
+def global_phik_from_rebinned_df(
+    data_binned: pd.DataFrame,
+    noise_correction: bool = True,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    njobs: int = -1,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Global correlation values of bivariate gaussian derived from chi2-value from rebinned df
 
@@ -247,18 +292,33 @@ def global_phik_from_rebinned_df(data_binned:pd.DataFrame, noise_correction:bool
     """
 
     phik_overview = phik_from_rebinned_df(
-        data_binned, noise_correction, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow,
-        njobs=njobs
+        data_binned,
+        noise_correction,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
+        njobs=njobs,
     )
     V = phik_overview.values
     Vinv = inv(V)
-    global_correlations = np.array([[np.sqrt(1 - 1/(V[i][i] * Vinv[i][i]))] for i in range(V.shape[0])])
+    global_correlations = np.array(
+        [[np.sqrt(1 - 1 / (V[i][i] * Vinv[i][i]))] for i in range(V.shape[0])]
+    )
     return global_correlations, phik_overview.index.values
 
 
-def global_phik_array(df:pd.DataFrame, interval_cols:list=None, bins:Union[int,list,np.ndarray,dict]=10, quantile:bool=False,
-                      noise_correction:bool=True, dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True,
-                      verbose:bool=True, njobs:int=-1) -> Tuple[np.ndarray, np.ndarray]:
+def global_phik_array(
+    df: pd.DataFrame,
+    interval_cols: list = None,
+    bins: Union[int, list, np.ndarray, dict] = 10,
+    quantile: bool = False,
+    noise_correction: bool = True,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    verbose: bool = True,
+    njobs: int = -1,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Global correlation values of bivariate gaussian derived from chi2-value
 
@@ -284,18 +344,36 @@ def global_phik_array(df:pd.DataFrame, interval_cols:list=None, bins:Union[int,l
     :return: global correlations array
     """
 
-    data_binned, binning_dict = auto_bin_data(df=df, interval_cols=interval_cols, bins=bins, quantile=quantile,
-                                              dropna=dropna, verbose=verbose)
+    data_binned, binning_dict = auto_bin_data(
+        df=df,
+        interval_cols=interval_cols,
+        bins=bins,
+        quantile=quantile,
+        dropna=dropna,
+        verbose=verbose,
+    )
 
     return global_phik_from_rebinned_df(
-        data_binned, noise_correction=noise_correction, dropna=dropna, drop_underflow=drop_underflow,
-        drop_overflow=drop_overflow, njobs=njobs
+        data_binned,
+        noise_correction=noise_correction,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
+        njobs=njobs,
     )
 
 
-def phik_from_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Series], num_vars: Union[str, list]=None,
-                    bins:Union[int, dict, list, np.ndarray]=10, quantile:bool=False, noise_correction:bool=True, dropna:bool=True,
-                    drop_underflow:bool=True, drop_overflow:bool=True) -> float:
+def phik_from_array(
+    x: Union[np.ndarray, pd.Series],
+    y: Union[np.ndarray, pd.Series],
+    num_vars: Union[str, list] = None,
+    bins: Union[int, dict, list, np.ndarray] = 10,
+    quantile: bool = False,
+    noise_correction: bool = True,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+) -> float:
     """
     Correlation matrix of bivariate gaussian derived from chi2-value
 
@@ -329,13 +407,23 @@ def phik_from_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Ser
         x, y = bin_data(df, num_vars, bins=bins, quantile=quantile).T.values
 
     return phik_from_binned_array(
-        x, y, noise_correction = noise_correction, dropna=dropna, drop_underflow=drop_underflow,
-        drop_overflow=drop_overflow
+        x,
+        y,
+        noise_correction=noise_correction,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
     )
 
 
-def phik_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray, pd.Series], noise_correction:bool=True,
-                           dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True) -> float:
+def phik_from_binned_array(
+    x: Union[np.ndarray, pd.Series],
+    y: Union[np.ndarray, pd.Series],
+    noise_correction: bool = True,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+) -> float:
     """
     Correlation matrix of bivariate gaussian derived from chi2-value
 
@@ -379,10 +467,15 @@ def phik_from_binned_array(x: Union[np.ndarray, pd.Series], y: Union[np.ndarray,
     return phik_from_hist2d(hist2d, noise_correction=noise_correction)
 
 
-def phik_observed_vs_expected_from_rebinned_df(obs_binned: pd.DataFrame, exp_binned: pd.DataFrame,
-                                               noise_correction: bool = True, dropna: bool = True,
-                                               drop_underflow: bool = True, drop_overflow: bool = True,
-                                               njobs: int = -1) -> pd.DataFrame:
+def phik_observed_vs_expected_from_rebinned_df(
+    obs_binned: pd.DataFrame,
+    exp_binned: pd.DataFrame,
+    noise_correction: bool = True,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    njobs: int = -1,
+) -> pd.DataFrame:
     """
     PhiK correlation matrix of comparing observed with expected dataset
 
@@ -426,13 +519,21 @@ def phik_observed_vs_expected_from_rebinned_df(obs_binned: pd.DataFrame, exp_bin
     if njobs == 1:
         # Useful when for instance using cProfiler: https://docs.python.org/3/library/profile.html
         phik_list = [
-            _calc_phik_obs_vs_exp(co, obs_binned[list(co)], exp_binned[list(co)], noise_correction)
-            for co in itertools.combinations_with_replacement(obs_binned.columns.values, 2)
+            _calc_phik_obs_vs_exp(
+                co, obs_binned[list(co)], exp_binned[list(co)], noise_correction
+            )
+            for co in itertools.combinations_with_replacement(
+                obs_binned.columns.values, 2
+            )
         ]
     else:
         phik_list = Parallel(n_jobs=njobs)(
-            delayed(_calc_phik_obs_vs_exp)(co, obs_binned[list(co)], exp_binned[list(co)], noise_correction)
-            for co in itertools.combinations_with_replacement(obs_binned.columns.values, 2)
+            delayed(_calc_phik_obs_vs_exp)(
+                co, obs_binned[list(co)], exp_binned[list(co)], noise_correction
+            )
+            for co in itertools.combinations_with_replacement(
+                obs_binned.columns.values, 2
+            )
         )
 
     if len(phik_list) == 0:
@@ -447,8 +548,12 @@ def phik_observed_vs_expected_from_rebinned_df(obs_binned: pd.DataFrame, exp_bin
     return phik_overview
 
 
-def _calc_phik_obs_vs_exp(comb: tuple, obs_binned: pd.DataFrame, exp_binned: pd.DataFrame,
-                          noise_correction: bool) -> Tuple[str, str, float]:
+def _calc_phik_obs_vs_exp(
+    comb: tuple,
+    obs_binned: pd.DataFrame,
+    exp_binned: pd.DataFrame,
+    noise_correction: bool,
+) -> Tuple[str, str, float]:
     """Split off calculation of phik for parallel processing
 
     :param tuple comb: union of two string columns
@@ -478,5 +583,7 @@ def _calc_phik_obs_vs_exp(comb: tuple, obs_binned: pd.DataFrame, exp_binned: pd.
     # if not, add these and and fill with zeros.
     expected = make_shapes_equal(observed, expected)
 
-    phik_value = phik_from_hist2d(observed=observed, noise_correction=noise_correction, expected=expected)
+    phik_value = phik_from_hist2d(
+        observed=observed, noise_correction=noise_correction, expected=expected
+    )
     return c0, c1, phik_value

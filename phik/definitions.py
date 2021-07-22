@@ -14,8 +14,7 @@ LICENSE.
 """
 
 # names assigned to underflow and overflow bin when assigning bin indices
-OF = 'OF'
-UF = 'UF'
+OF = "OF"
+UF = "UF"
 # name replacement of np.nan
-NaN = 'NaN'
-
+NaN = "NaN"

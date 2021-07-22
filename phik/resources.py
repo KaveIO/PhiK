@@ -19,15 +19,17 @@ from pkg_resources import resource_filename
 import phik
 
 # Fixtures
-_FIXTURE = {_.name: _ for _ in pathlib.Path(resource_filename(phik.__name__, 'data')).glob('*')}
+_FIXTURE = {
+    _.name: _ for _ in pathlib.Path(resource_filename(phik.__name__, "data")).glob("*")
+}
 # Tutorial notebooks
-_NOTEBOOK = {_.name: _ for _ in pathlib.Path(resource_filename(phik.__name__, 'notebooks')).glob('*.ipynb')}
+_NOTEBOOK = {
+    _.name: _
+    for _ in pathlib.Path(resource_filename(phik.__name__, "notebooks")).glob("*.ipynb")
+}
 
 # Resource types
-_RESOURCES = {
-    'fixture': _FIXTURE,
-    'notebook': _NOTEBOOK
-}
+_RESOURCES = {"fixture": _FIXTURE, "notebook": _NOTEBOOK}
 
 
 def _resource(resource_type, name: str) -> str:
@@ -44,8 +46,11 @@ def _resource(resource_type, name: str) -> str:
     if full_path and full_path.exists():
         return str(full_path)
 
-    raise FileNotFoundError('Could not find {resource_type} "{name!s}"! Does it exist?'
-                            .format(resource_type=resource_type, name=name))
+    raise FileNotFoundError(
+        'Could not find {resource_type} "{name!s}"! Does it exist?'.format(
+            resource_type=resource_type, name=name
+        )
+    )
 
 
 def fixture(name: str) -> str:
@@ -56,7 +61,7 @@ def fixture(name: str) -> str:
     :rtype: str
     :raises FileNotFoundError: If the fixture cannot be found.
     """
-    return _resource('fixture', name)
+    return _resource("fixture", name)
 
 
 def notebook(name: str) -> str:
@@ -67,4 +72,4 @@ def notebook(name: str) -> str:
     :rtype: str
     :raises FileNotFoundError: If the notebook cannot be found.
     """
-    return _resource('notebook', name)
+    return _resource("notebook", name)
