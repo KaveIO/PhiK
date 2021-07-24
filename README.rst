@@ -28,13 +28,13 @@ Example notebooks
    :widths: 80 20
    :header-rows: 1
 
-   * - Tutorial
-     - Colab link
-   * - `Phi_K basic tutorial <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
-     - `on google colab <https://colab.research.google.com/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
-   * - `Phi_K advanced tutorial (detailed configuration and more) <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
-     - `on google colab <https://colab.research.google.com/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
-   * - `Phi_K spark tutorial (example phik matrix with spark) <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_spark.ipynb>`_
+   * - Static link
+     - Google Colab link
+   * - `basic tutorial <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
+     - `basic on colab <https://colab.research.google.com/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
+   * - `advanced tutorial (detailed configuration) <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
+     - `advanced on colab <https://colab.research.google.com/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
+   * - `spark tutorial <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_spark.ipynb>`_
      - no spark available
 
 Documentation
