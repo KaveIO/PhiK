@@ -25,7 +25,7 @@ Example notebooks
 =================
 
 .. list-table::
-   :widths: 80 20
+   :widths: 60 40
    :header-rows: 1
 
    * - Static link
