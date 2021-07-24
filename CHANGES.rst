@@ -43,7 +43,7 @@ Other
   is applied.
 
 * Migrated the spark example notebook from popmon to directly using histogrammar for histogram creation.
-
+* Added links in the readme of the basic and advanced tutorials on google colab.
 
 
 
