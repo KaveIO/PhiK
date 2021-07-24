@@ -31,9 +31,9 @@ Example notebooks
    * - Tutorial
      - Colab link
    * - `Phi_K basic tutorial <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
-     - |notebook_basic_colab|
+     - `on google colab <https://colab.research.google.com/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
    * - `Phi_K advanced tutorial (detailed configuration and more) <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
-     - |notebook_advanced_colab|
+     - `on google colab <https://colab.research.google.com/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
 
 Documentation
 =============
