@@ -34,6 +34,8 @@ Example notebooks
      - `on google colab <https://colab.research.google.com/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
    * - `Phi_K advanced tutorial (detailed configuration and more) <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
      - `on google colab <https://colab.research.google.com/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
+   * - `Phi_K spark tutorial (example phik matrix with spark) <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_spark.ipynb>`_
+     - no spark available
 
 Documentation
 =============
