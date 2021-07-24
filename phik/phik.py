@@ -47,7 +47,7 @@ def spark_phik_matrix_from_hist2d_dict(spark_context, hist_dict: dict):
     """
 
     for k, v in hist_dict.items():
-        if not isinstance(v, np.ndarray):
+        if not isinstance(v, np.ndarray) and v.shape[1] == 2:
             raise TypeError("hist_dict should be a dictionary of 2d numpy arrays.")
 
     hist_list = list(hist_dict.items())
