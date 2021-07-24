@@ -150,7 +150,7 @@ def sim_chi2_distribution(values: np.ndarray, nsim:int=1000, lambda_:str='log-li
         col_product_multinominal]
     :param str lambda_: test statistic. Available options are [pearson, log-likelihood].
     :param bool alt_hypothesis: if True, simulate values directly, and not its dependent frequency estimates.
-    :param int njobs: number of parallel jobs used for simulation. default is -1.
+    :param int njobs: number of parallel jobs used for simulation. default is -1. 1 uses no parallel jobs.
     :returns chi2s: list of chi2 values for each simulated dataset
     """
     exp_dep = get_dependent_frequency_estimates(values) if not alt_hypothesis else values

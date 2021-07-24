@@ -138,7 +138,7 @@ def phik_from_rebinned_df(
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
-    :param int njobs: number of parallel jobs used for calculation of phik. default is -1.
+    :param int njobs: number of parallel jobs used for calculation of phik. default is -1. 1 uses no parallel jobs.
     :return: phik correlation matrix
     """
 
@@ -190,7 +190,7 @@ def _calc_phik(
     :param tuple comb: union of two string columns
     :param pd.DataFrame data_binned: input data where interval variables have been binned
     :param bool noise_correction: apply noise correction in phik calculation
-    :return:
+    :return: tuple of variable-x, variable-y, phik-value
     """
     c0, c1 = comb
     if c0 == c1:
@@ -241,7 +241,7 @@ def phik_matrix(
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
     :param bool verbose: if False, do not print all interval columns that are guessed
-    :param int njobs: number of parallel jobs used for calculation of phik. default is -1.
+    :param int njobs: number of parallel jobs used for calculation of phik. default is -1. 1 uses no parallel jobs.
     :return: phik correlation matrix
     """
 
@@ -287,7 +287,7 @@ def global_phik_from_rebinned_df(
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
-    :param int njobs: number of parallel jobs used for calculation of global phik. default is -1.
+    :param int njobs: number of parallel jobs used for calculation of phik. default is -1. 1 uses no parallel jobs.
     :return: global correlations array
     """
 
@@ -340,7 +340,7 @@ def global_phik_array(
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
     :param bool verbose: if False, do not print all interval columns that are guessed
-    :param int njobs: number of parallel jobs used for calculation of global phik. default is -1.
+    :param int njobs: number of parallel jobs used for calc of global phik. default is -1. 1 uses no parallel jobs.
     :return: global correlations array
     """
 
@@ -491,7 +491,7 @@ def phik_observed_vs_expected_from_rebinned_df(
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
-    :param int njobs: number of parallel jobs used for calculation of phik. default is -1.
+    :param int njobs: number of parallel jobs used for calculation of phik. default is -1. 1 uses no parallel jobs.
     :return: phik correlation matrix
     """
     # basic checks

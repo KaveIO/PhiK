@@ -149,7 +149,7 @@ def significance_from_chi2_MC(
 
     :param float chi2: chi2 value
     :param list chi2s: provide your own chi2s values (optional)
-    :param int njobs: number of parallel jobs used for simulation. default is -1.
+    :param int njobs: number of parallel jobs used for simulation. default is -1. 1 uses no parallel jobs.
     :returns: pvalue, significance
     """
 
@@ -195,7 +195,7 @@ def significance_from_chi2_hybrid(
     :param float chi2: chi2 value
     :param list chi2s: provide your own chi2s values (optional)
     :param float avg_per_bin: average number of data points per bin
-    :param int njobs: number of parallel jobs used for simulation. default is -1.
+    :param int njobs: number of parallel jobs used for simulation. default is -1. 1 uses no parallel jobs.
     :returns: p_value, significance
     """
 
@@ -252,7 +252,7 @@ def significance_from_hist2d(
     :param str simulation_method: simulation method. Options: [multinominal, row_product_multinominal, \
      col_product_multinominal, hypergeometric].
     :param str significance_method: significance_method. Options: [asymptotic, MC, hybrid]
-    :param int njobs: number of parallel jobs used for simulation. default is -1.
+    :param int njobs: number of parallel jobs used for simulation. default is -1. 1 uses no parallel jobs.
     :return: pvalue, significance
     """
 
@@ -405,7 +405,7 @@ def significance_matrix(
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
     :param bool verbose: if False, do not print all interval columns that are guessed
-    :param int njobs: number of parallel jobs used for simulation. default is -1.
+    :param int njobs: number of parallel jobs used for simulation. default is -1. 1 uses no parallel jobs.
     :return: significance matrix
     """
 
@@ -468,7 +468,7 @@ def significance_from_array(
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
-    :param int njobs: number of parallel jobs used for simulation. default is -1.
+    :param int njobs: number of parallel jobs used for simulation. default is -1. 1 uses no parallel jobs.
     :return: p-value, significance
     """
     if num_vars is None:
@@ -524,7 +524,7 @@ def significance_from_binned_array(
     a numeric variable)
     :param bool drop_overflow: do not take into account records in overflow bin when True (relevant when binning\
     a numeric variable)
-    :param int njobs: number of parallel jobs used for simulation. default is -1.
+    :param int njobs: number of parallel jobs used for simulation. default is -1. 1 uses no parallel jobs.
     :return: p-value, significance
     """
 
