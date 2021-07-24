@@ -17,12 +17,9 @@ The combined features of Phi_K form an advantage over existing coefficients. Fir
 Second, it captures non-linear dependency. Third, it reverts to the Pearson correlation coefficient in case of a bi-variate normal input distribution.
 These are useful features when studying the correlation matrix of variables with mixed types.
 
-The presented algorithms are easy to use and available through this public Python library: the correlation analyzer package.
-Emphasis is paid to the proper evaluation of statistical significance of correlations and to the interpretation of variable relationships
+For details on the methodology behind the calculations, please see our publication. Emphasis is paid to the proper evaluation of statistical significance of correlations and to the interpretation of variable relationships
 in a contingency table, in particular in case of low statistics samples.
-
-For example, the Phi_K correlation analyzer package has been used to study surveys, insurance claims, correlograms, etc.
-For details on the methodology behind the calculations, please see our publication.
+The presented algorithms are easy to use and available through this public Python library.
 
 Example notebooks
 =================
@@ -33,9 +30,9 @@ Example notebooks
 
    * - Tutorial
      - Colab link
-   * - `Basic tutorial <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
+   * - `Phi_K basic tutorial <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_basic.ipynb>`_
      - |notebook_basic_colab|
-   * - `Advanced tutorial (detailed configuration and more) <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
+   * - `Phi_K advanced tutorial (detailed configuration and more) <https://nbviewer.jupyter.org/github/KaveIO/PhiK/blob/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_
      - |notebook_advanced_colab|
 
 Documentation
