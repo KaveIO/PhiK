@@ -42,9 +42,34 @@ Other
   The default value is -1, in which case all available cores are used. When using ``njobs=1`` no parallel processing
   is applied.
 
-* Migrated the spark example notebook from popmon to directly using histogrammar for histogram creation.
-* Added links in the readme of the basic and advanced tutorials on google colab.
+* Phi_K can now be calculated with an independent expectation histogram:
 
+  .. code-block:: python
+
+    from phik.phik import phik_from_hist2d
+
+    cols = ["mileage", "car_size"]
+    interval_cols = ["mileage"]
+
+    observed = df1[["feature1", "feature2"]].hist2d()
+    expected = df2[["feature1", "feature2"]].hist2d()
+
+    phik_value = phik_from_hist2d(observed=observed, expected=expected)
+
+  The expected histogram is taken to be (relatively) large in number of counts
+  compared with the observed histogram.
+
+  Or can compare two (pre-binned) datasets against each other directly. Again the expected dataset
+  is assumed to be relatively large:
+
+  .. code-block:: python
+
+    from phik.phik import phik_observed_vs_expected_from_rebinned_df
+
+    phik_matrix = phik_observed_vs_expected_from_rebinned_df(df1_binned, df2_binned)
+
+* Added links in the readme to the basic and advanced Phi_K tutorials on google colab.
+* Migrated the spark example Phi_K notebook from popmon to directly using histogrammar for histogram creation.
 
 
 
