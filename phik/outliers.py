@@ -30,7 +30,7 @@ from .data_quality import dq_check_nunique_values
 from .utils import array_like_to_dataframe, guess_interval_cols
 
 
-def poisson_obs_p(nobs:int, nexp:float, nexperr:float) -> float:
+def poisson_obs_p(nobs: int, nexp: float, nexperr: float) -> float:
     """
     Calculate p-value for nobs observations given the expected value and its
     uncertainty using the Linnemann method.
@@ -62,18 +62,18 @@ def poisson_obs_p(nobs:int, nexp:float, nexperr:float) -> float:
         return 1
 
     if nexperr > 0:
-        nexpalt = nexp if nexp>0 else nexperr
-        tau = nexpalt/(nexperr*nexperr)
-        b = nexpalt*tau+1
-        x = 1/(1+tau)
+        nexpalt = nexp if nexp > 0 else nexperr
+        tau = nexpalt / (nexperr * nexperr)
+        b = nexpalt * tau + 1
+        x = 1 / (1 + tau)
         p = betainc(nobs, b, x)
-    else: # assume error==0
-        p = stats.poisson.sf(nobs-1, nexp)
+    else:  # assume error==0
+        p = stats.poisson.sf(nobs - 1, nexp)
 
     return p
 
 
-def log_poisson_obs_p(nobs:int, nexp:float, nexperr:float) -> Tuple[float,float]:
+def log_poisson_obs_p(nobs: int, nexp: float, nexperr: float) -> Tuple[float, float]:
     """
     Calculate logarithm of p-value for nobs observations given the expected value and its
     uncertainty using the Linnemann method.
@@ -106,20 +106,20 @@ def log_poisson_obs_p(nobs:int, nexp:float, nexperr:float) -> Tuple[float,float]
         return 0, -np.inf
 
     if nexperr > 0:
-        nexpalt = nexp if nexp>0 else nexperr
-        tau = nexpalt/(nexperr*nexperr)
-        b = nexpalt*tau+1
-        x = 1/(1+tau)
+        nexpalt = nexp if nexp > 0 else nexperr
+        tau = nexpalt / (nexperr * nexperr)
+        b = nexpalt * tau + 1
+        x = 1 / (1 + tau)
         tlogp = log_incompbeta(nobs, b, x)
-    else: # assume error==0. nobs>0 at this stage
-        logp = stats.poisson.logsf(nobs-1, nexp)
-        p = stats.poisson.sf(nobs-1, nexp)
-        tlogp = (logp, np.log(1-p))
+    else:  # assume error==0. nobs>0 at this stage
+        logp = stats.poisson.logsf(nobs - 1, nexp)
+        p = stats.poisson.sf(nobs - 1, nexp)
+        tlogp = (logp, np.log(1 - p))
 
     return tlogp
 
 
-def poisson_obs_z(nobs:int, nexp:float, nexperr:float) -> float:
+def poisson_obs_z(nobs: int, nexp: float, nexperr: float) -> float:
     """
     Calculate the Z-value for measuring nobs observations given the expected value.
 
@@ -137,9 +137,9 @@ def poisson_obs_z(nobs:int, nexp:float, nexperr:float) -> float:
 
     # special cases: numerically too close to zero or one.
     # try to evaluate log(p) or log(1-p)
-    if p_value==0 or p_value==1:
+    if p_value == 0 or p_value == 1:
         tlogp = log_poisson_obs_p(nobs, nexp, nexperr)
-        if p_value==0:
+        if p_value == 0:
             logp = tlogp[0]
             z_value = z_from_logp(logp)
         else:
@@ -152,14 +152,14 @@ def poisson_obs_z(nobs:int, nexp:float, nexperr:float) -> float:
     return z_value
 
 
-def poisson_obs_mid_p(nobs:int, nexp:float, nexperr:float) -> float:
+def poisson_obs_mid_p(nobs: int, nexp: float, nexperr: float) -> float:
     """
     Calculate the p-value for measuring nobs observations given the expected value.
 
     The Lancaster mid-P correction is applied to take into account the effects of discrete statistics.
     If the uncertainty on the expected value is known the Linnemann method is used for the p-value calculation.
     Otherwise the Poisson distribution is used to estimate the p-value.
-    
+
     :param int nobs: observed count
     :param float nexp: expected number
     :param float nexperr: uncertainty on the expected number
@@ -167,14 +167,16 @@ def poisson_obs_mid_p(nobs:int, nexp:float, nexperr:float) -> float:
     :rtype: float
     """
     p = poisson_obs_p(nobs, nexp, nexperr)
-    pplus1 = poisson_obs_p(nobs+1, nexp, nexperr)
+    pplus1 = poisson_obs_p(nobs + 1, nexp, nexperr)
     mid_p = 0.5 * (p - pplus1)
     p -= mid_p
 
     return p
 
 
-def log_poisson_obs_mid_p(nobs:int, nexp:float, nexperr:float) -> Tuple[float,float]:
+def log_poisson_obs_mid_p(
+    nobs: int, nexp: float, nexperr: float
+) -> Tuple[float, float]:
     """
     Calculate the logarithm of the p-value for measuring nobs observations given the expected value.
 
@@ -189,30 +191,30 @@ def log_poisson_obs_mid_p(nobs:int, nexp:float, nexperr:float) -> Tuple[float,fl
     :rtype: tuple
     """
     tlogp = log_poisson_obs_p(nobs, nexp, nexperr)
-    tlogpp1 = log_poisson_obs_p(nobs+1, nexp, nexperr)
+    tlogpp1 = log_poisson_obs_p(nobs + 1, nexp, nexperr)
 
     # 1. evaluate log([p+pp1]/2) ; note that p > pp1
     #    = log(0.5) + log(p) + log(1 + exp[log(pp1)-log(p)])
     lp = tlogp[0]
     lp1 = tlogpp1[0]
-    logmidp = np.log(0.5) + lp + np.log( 1 + np.exp(lp1-lp) )
+    logmidp = np.log(0.5) + lp + np.log(1 + np.exp(lp1 - lp))
 
     # 2. let q = 1 - p; note that qp1 > q
     #    evaluate log(1-[p+pp1]/2) = log ([q+qp1]/2)
     #    = log(0.5) + log(qp1) + log(1 + exp[log(q)-log(qp1)])
     lq = tlogp[1]
     lq1 = tlogpp1[1]
-    logmidq = np.log(0.5) + lq1 + np.log( 1 + np.exp(lq-lq1) )
+    logmidq = np.log(0.5) + lq1 + np.log(1 + np.exp(lq - lq1))
 
     return logmidp, logmidq
 
 
-def poisson_obs_mid_z(nobs:int, nexp:float, nexperr:float) -> float:
+def poisson_obs_mid_z(nobs: int, nexp: float, nexperr: float) -> float:
     """Calculate the Z-value for measuring nobs observations given the expected value.
 
     The Z-value express the number
     of sigmas the observed value deviates from the expected value, and is based on the p-value calculation.
-    The Lancaster midP correction is applied to take into account the effects of low statistics. If the uncertainty on the 
+    The Lancaster midP correction is applied to take into account the effects of low statistics. If the uncertainty on the
     expected value is known the Linnemann method is used for the p-value calculation. Otherwise the Poisson distribution is
     used to estimate the p-value.
 
@@ -226,9 +228,9 @@ def poisson_obs_mid_z(nobs:int, nexp:float, nexperr:float) -> float:
 
     # special cases: numerically too close to zero or one.
     # try to evaluate log(p) or log(1-p)
-    if p_value==0 or p_value==1:
+    if p_value == 0 or p_value == 1:
         tlogp = log_poisson_obs_mid_p(nobs, nexp, nexperr)
-        if p_value==0:
+        if p_value == 0:
             logp = tlogp[0]
             z_value = z_from_logp(logp)
         else:
@@ -241,7 +243,9 @@ def poisson_obs_mid_z(nobs:int, nexp:float, nexperr:float) -> float:
     return z_value
 
 
-def get_independent_frequency_estimates(values:np.ndarray, CI_method:str='poisson') -> Tuple[np.ndarray, np.ndarray]:
+def get_independent_frequency_estimates(
+    values: np.ndarray, CI_method: str = "poisson"
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculation of expected frequencies, based on the ABCD-method, i.e. independent frequency estimates.
 
@@ -260,15 +264,19 @@ def get_independent_frequency_estimates(values:np.ndarray, CI_method:str='poisso
         for j in range(values.shape[1]):
             Aobs = values[i][j]
             B = values[i].sum() - Aobs
-            C = values[:,j].sum() - Aobs
+            C = values[:, j].sum() - Aobs
             D = values.sum() - B - C - Aobs
             # prediction for A can only be calculated if D is non-zero
             if D > 0:
-                exp[i][j] = B*C/D
+                exp[i][j] = B * C / D
                 sigmaB = get_uncertainty(B, CI_method=CI_method)
                 sigmaC = get_uncertainty(C, CI_method=CI_method)
                 sigmaD = get_uncertainty(D, CI_method=CI_method)
-                experr[i][j] = np.sqrt(pow(sigmaB*C/D,2) + pow(sigmaC*B/D,2) + pow(sigmaD*exp[i][j]/D,2))
+                experr[i][j] = np.sqrt(
+                    pow(sigmaB * C / D, 2)
+                    + pow(sigmaC * B / D, 2)
+                    + pow(sigmaD * exp[i][j] / D, 2)
+                )
             # in case of zero D, A is infinity. Set prediction to NaN.
             else:
                 exp[i][j] = np.nan
@@ -277,7 +285,7 @@ def get_independent_frequency_estimates(values:np.ndarray, CI_method:str='poisso
     return exp, experr
 
 
-def get_uncertainty(x:float, CI_method:str='poisson') -> float:
+def get_uncertainty(x: float, CI_method: str = "poisson") -> float:
     """
     Calculate the uncertainty on a random number x taken from the poisson distribution
 
@@ -291,12 +299,12 @@ def get_uncertainty(x:float, CI_method:str='poisson') -> float:
     :return x_err: the uncertainty on x (1 sigma)
     """
 
-    if CI_method == 'exact_poisson':
+    if CI_method == "exact_poisson":
         xerr = get_exact_poisson_uncertainty(x)
-    elif CI_method == 'poisson':
+    elif CI_method == "poisson":
         xerr = get_poisson_uncertainty(x)
     else:
-        raise NotImplementedError('CI method {} not valid'.format(CI_method))
+        raise NotImplementedError("CI method {} not valid".format(CI_method))
 
     return xerr
 
@@ -312,10 +320,10 @@ def get_poisson_uncertainty(x: float) -> float:
     return np.sqrt(x) if x >= 1 else 1.0
 
 
-def get_exact_poisson_uncertainty(x:float, nsigmas: float=1) -> float:
+def get_exact_poisson_uncertainty(x: float, nsigmas: float = 1) -> float:
     """
     Calculate the uncertainty on x using an exact poisson confidence interval. The width of the confidence interval can
-    be specified using the number of sigmas. The default number of sigmas is set to 1, resulting in an error that is 
+    be specified using the number of sigmas. The default number of sigmas is set to 1, resulting in an error that is
     approximated by the standard poisson error sqrt(x).
 
     Exact poisson uncertainty is described here:
@@ -329,17 +337,19 @@ def get_exact_poisson_uncertainty(x:float, nsigmas: float=1) -> float:
     """
     # see formula at:
     # https://en.wikipedia.org/wiki/Poisson_distribution#Confidence_interval
-    pl = stats.norm.cdf(-1*nsigmas, loc=0, scale=1)
-    pu = stats.norm.cdf(1*nsigmas, loc=0, scale=1)
+    pl = stats.norm.cdf(-1 * nsigmas, loc=0, scale=1)
+    pu = stats.norm.cdf(1 * nsigmas, loc=0, scale=1)
 
-    lb = stats.chi2.ppf(pl, 2*x)/2 if x != 0 else 0
-    ub = stats.chi2.ppf(pu, 2*(x + 1)) / 2
+    lb = stats.chi2.ppf(pl, 2 * x) / 2 if x != 0 else 0
+    ub = stats.chi2.ppf(pu, 2 * (x + 1)) / 2
 
     # average err is almost equal to sqrt(x)+0.5
     return (ub - lb) / 2
 
 
-def get_outlier_significances(obs:np.ndarray, exp:np.ndarray, experr:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def get_outlier_significances(
+    obs: np.ndarray, exp: np.ndarray, experr: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Evaluation of significance of observation
 
@@ -363,7 +373,9 @@ def get_outlier_significances(obs:np.ndarray, exp:np.ndarray, experr:np.ndarray)
     return pvalues, zvalues
 
 
-def outlier_significance_matrix_from_hist2d(data:np.ndarray, CI_method:str='poisson') -> Tuple[np.ndarray, np.ndarray]:
+def outlier_significance_matrix_from_hist2d(
+    data: np.ndarray, CI_method: str = "poisson"
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate the significance matrix of excesses or deficits in a contingency table
 
@@ -380,8 +392,15 @@ def outlier_significance_matrix_from_hist2d(data:np.ndarray, CI_method:str='pois
     return pvalues, zvalues
 
 
-def outlier_significance_matrix_from_rebinned_df(data_binned:pd.DataFrame, binning_dict:dict, CI_method:str='poisson', ndecimals:int=1,
-                                                 dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True) -> pd.DataFrame:
+def outlier_significance_matrix_from_rebinned_df(
+    data_binned: pd.DataFrame,
+    binning_dict: dict,
+    CI_method: str = "poisson",
+    ndecimals: int = 1,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+) -> pd.DataFrame:
     """
     Calculate the significance matrix of excesses or deficits
 
@@ -400,38 +419,64 @@ def outlier_significance_matrix_from_rebinned_df(data_binned:pd.DataFrame, binni
     """
 
     c0, c1 = data_binned.columns
-    df_datahist = hist2d_from_rebinned_df(data_binned, dropna, drop_underflow, drop_overflow)
+    df_datahist = hist2d_from_rebinned_df(
+        data_binned, dropna, drop_underflow, drop_overflow
+    )
 
     if 1 in df_datahist.shape or 0 in df_datahist.shape:
-        warnings.warn('Too few unique values for variable {0:s} ({1:d}) or {2:s} ({3:d}) to calculate outlier '
-                      'significances'
-                      .format(c0, df_datahist.shape[0], c1, df_datahist.shape[1]))
+        warnings.warn(
+            "Too few unique values for variable {0:s} ({1:d}) or {2:s} ({3:d}) to calculate outlier "
+            "significances".format(c0, df_datahist.shape[0], c1, df_datahist.shape[1])
+        )
         return np.nan
 
-    for c, a in [(c0, 'index'), (c1, 'columns')]:
+    for c, a in [(c0, "index"), (c1, "columns")]:
         if c in binning_dict.keys():
             # check for missing bins. This can occur due to NaN values for variable c1 in which case rows are dropped
-            orig_vals = data_binned[~data_binned[c].isin([defs.UF, defs.OF, defs.NaN])][c].value_counts().sort_index().index
+            orig_vals = (
+                data_binned[~data_binned[c].isin([defs.UF, defs.OF, defs.NaN])][c]
+                .value_counts()
+                .sort_index()
+                .index
+            )
             missing = list(set(orig_vals) - set(getattr(df_datahist, a)))
             imissing = []
             for v in missing:
                 imissing.append(np.where(orig_vals == v)[0][0])
 
-            vals = ['{1:.{0}f}_{2:.{0}f}'.format(ndecimals, binning_dict[c][i][0], binning_dict[c][i][1])
-                          for i in range(len(binning_dict[c])) if not i in imissing]
-            vals += list(getattr(df_datahist, a)[len(vals):])  # to deal with UF and OF
+            vals = [
+                "{1:.{0}f}_{2:.{0}f}".format(
+                    ndecimals, binning_dict[c][i][0], binning_dict[c][i][1]
+                )
+                for i in range(len(binning_dict[c]))
+                if not i in imissing
+            ]
+            vals += list(getattr(df_datahist, a)[len(vals) :])  # to deal with UF and OF
             setattr(df_datahist, a, vals)
 
-    pvalues, zvalues = outlier_significance_matrix_from_hist2d(df_datahist.values, CI_method=CI_method)
-    outlier_overview = pd.DataFrame(zvalues, index=df_datahist.index, columns=df_datahist.columns)
+    pvalues, zvalues = outlier_significance_matrix_from_hist2d(
+        df_datahist.values, CI_method=CI_method
+    )
+    outlier_overview = pd.DataFrame(
+        zvalues, index=df_datahist.index, columns=df_datahist.columns
+    )
 
     return outlier_overview
 
 
-def outlier_significance_matrix(df: pd.DataFrame, interval_cols:Optional[list]=None, CI_method:str='poisson',
-                                ndecimals:int=1, bins=10, quantile:bool=False, dropna:bool=True,
-                                drop_underflow:bool=True, drop_overflow:bool=True, retbins:bool=False,
-                                verbose:bool=True):
+def outlier_significance_matrix(
+    df: pd.DataFrame,
+    interval_cols: Optional[list] = None,
+    CI_method: str = "poisson",
+    ndecimals: int = 1,
+    bins=10,
+    quantile: bool = False,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    retbins: bool = False,
+    verbose: bool = True,
+):
     """
     Calculate the significance matrix of excesses or deficits
 
@@ -454,18 +499,27 @@ def outlier_significance_matrix(df: pd.DataFrame, interval_cols:Optional[list]=N
     """
 
     if len(df.columns) != 2:
-        raise ValueError('df should contain only two columns')
+        raise ValueError("df should contain only two columns")
 
     if interval_cols is None:
         interval_cols = guess_interval_cols(df, verbose)
 
-    df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
+    df_clean, interval_cols_clean = dq_check_nunique_values(
+        df, interval_cols, dropna=dropna
+    )
 
-    data_binned, binning_dict = bin_data(df_clean, interval_cols_clean, retbins=True, bins=bins, quantile=quantile)
+    data_binned, binning_dict = bin_data(
+        df_clean, interval_cols_clean, retbins=True, bins=bins, quantile=quantile
+    )
 
     os_matrix = outlier_significance_matrix_from_rebinned_df(
-        data_binned, binning_dict, CI_method=CI_method, ndecimals=ndecimals,
-        dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow
+        data_binned,
+        binning_dict,
+        CI_method=CI_method,
+        ndecimals=ndecimals,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
     )
 
     if retbins:
@@ -473,9 +527,16 @@ def outlier_significance_matrix(df: pd.DataFrame, interval_cols:Optional[list]=N
     return os_matrix
 
 
-def outlier_significance_matrices_from_rebinned_df(data_binned: pd.DataFrame, binning_dict=None, CI_method='poisson',
-                                                   ndecimals=1, combinations:Union[list, tuple]=(), dropna=True,
-                                                   drop_underflow=True, drop_overflow=True):
+def outlier_significance_matrices_from_rebinned_df(
+    data_binned: pd.DataFrame,
+    binning_dict=None,
+    CI_method="poisson",
+    ndecimals=1,
+    combinations: Union[list, tuple] = (),
+    dropna=True,
+    drop_underflow=True,
+    drop_overflow=True,
+):
     """
     Calculate the significance matrix of excesses or deficits for all possible combinations of variables, or for
     those combinations specified using combinations. This functions could also be used instead of
@@ -507,18 +568,33 @@ a numeric variable)
     outliers_overview = []
     for i, (c0, c1) in enumerate(combinations):
         zvalues_overview = outlier_significance_matrix_from_rebinned_df(
-            data_binned[[c0, c1]].copy(), binning_dict, CI_method=CI_method, ndecimals=ndecimals,
-            dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow
+            data_binned[[c0, c1]].copy(),
+            binning_dict,
+            CI_method=CI_method,
+            ndecimals=ndecimals,
+            dropna=dropna,
+            drop_underflow=drop_underflow,
+            drop_overflow=drop_overflow,
         )
         outliers_overview.append((c0, c1, zvalues_overview))
 
     return outliers_overview
 
 
-def outlier_significance_matrices(df: pd.DataFrame, interval_cols:Optional[list]=None, CI_method:str='poisson', ndecimals:int=1,
-                                  bins=10, quantile:bool=False, combinations:Union[list, tuple]=(),
-                                  dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True,
-                                  retbins:bool=False, verbose:bool=True):
+def outlier_significance_matrices(
+    df: pd.DataFrame,
+    interval_cols: Optional[list] = None,
+    CI_method: str = "poisson",
+    ndecimals: int = 1,
+    bins=10,
+    quantile: bool = False,
+    combinations: Union[list, tuple] = (),
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    retbins: bool = False,
+    verbose: bool = True,
+):
     """
     Calculate the significance matrix of excesses or deficits for all possible combinations of variables, or for
     those combinations specified using combinations
@@ -547,13 +623,23 @@ def outlier_significance_matrices(df: pd.DataFrame, interval_cols:Optional[list]
     if interval_cols is None:
         interval_cols = guess_interval_cols(df, verbose)
 
-    df_clean, interval_cols_clean = dq_check_nunique_values(df, interval_cols, dropna=dropna)
+    df_clean, interval_cols_clean = dq_check_nunique_values(
+        df, interval_cols, dropna=dropna
+    )
 
-    data_binned, binning_dict = bin_data(df_clean, interval_cols_clean, retbins=True, bins=bins, quantile=quantile)
+    data_binned, binning_dict = bin_data(
+        df_clean, interval_cols_clean, retbins=True, bins=bins, quantile=quantile
+    )
 
     os_matrices = outlier_significance_matrices_from_rebinned_df(
-        data_binned, binning_dict, CI_method, ndecimals, combinations=combinations, dropna=dropna,
-        drop_underflow=drop_underflow, drop_overflow=drop_overflow
+        data_binned,
+        binning_dict,
+        CI_method,
+        ndecimals,
+        combinations=combinations,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
     )
 
     # Convert to dict
@@ -564,11 +650,19 @@ def outlier_significance_matrices(df: pd.DataFrame, interval_cols:Optional[list]
     return os_matrices
 
 
-def outlier_significance_from_array(x: Union[np.ndarray, list, pd.Series], y: Union[np.ndarray, list, pd.Series],
-                                    num_vars:list=None, bins:Union[int,list,np.ndarray,dict]=10, quantile:bool=False,
-                                    ndecimals:int=1, CI_method:str='poisson', dropna:bool=True,
-                                    drop_underflow:bool=True, drop_overflow:bool=True,
-                                    verbose:bool=True) -> pd.DataFrame:
+def outlier_significance_from_array(
+    x: Union[np.ndarray, list, pd.Series],
+    y: Union[np.ndarray, list, pd.Series],
+    num_vars: list = None,
+    bins: Union[int, list, np.ndarray, dict] = 10,
+    quantile: bool = False,
+    ndecimals: int = 1,
+    CI_method: str = "poisson",
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    verbose: bool = True,
+) -> pd.DataFrame:
     """
     Calculate the significance matrix of excesses or deficits of input x and input y. x and y can contain interval, \
     ordinal or categorical data. Use the num_vars variable to indicate whether x and/or y contain interval data.
@@ -597,14 +691,27 @@ def outlier_significance_from_array(x: Union[np.ndarray, list, pd.Series], y: Un
         num_vars = guess_interval_cols(df, verbose)
 
     return outlier_significance_matrix(
-        df, interval_cols=num_vars, bins=bins, quantile=quantile, ndecimals=ndecimals, CI_method=CI_method,
-        dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow, verbose=verbose
+        df,
+        interval_cols=num_vars,
+        bins=bins,
+        quantile=quantile,
+        ndecimals=ndecimals,
+        CI_method=CI_method,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
+        verbose=verbose,
     )
 
 
-def outlier_significance_from_binned_array(x: Union[np.ndarray, list, pd.Series], y: Union[np.ndarray, list, pd.Series],
-                                           CI_method: str='poisson', dropna:bool=True, drop_underflow:bool=True,
-                                           drop_overflow:bool=True) -> pd.DataFrame:
+def outlier_significance_from_binned_array(
+    x: Union[np.ndarray, list, pd.Series],
+    y: Union[np.ndarray, list, pd.Series],
+    CI_method: str = "poisson",
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+) -> pd.DataFrame:
 
     """
     Calculate the significance matrix of excesses or deficits of input x and input y. x and y can contain binned
@@ -625,5 +732,9 @@ def outlier_significance_from_binned_array(x: Union[np.ndarray, list, pd.Series]
     df = array_like_to_dataframe(x, y)
 
     return outlier_significance_matrix(
-        df, CI_method=CI_method, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow
+        df,
+        CI_method=CI_method,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
     )

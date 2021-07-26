@@ -13,9 +13,13 @@ modification, are permitted according to the terms listed in the file
 LICENSE.
 """
 
+import re
 import os
 import sys
+import glob
+import shutil
 import subprocess
+from pathlib import Path
 from warnings import warn
 from setuptools import find_packages
 from setuptools import setup, Extension
@@ -37,7 +41,7 @@ NAME = 'phik'
 MAJOR = 0
 REVISION = 12
 PATCH = 0
-DEV = True
+DEV = False
 
 # note: also update README.rst
 
@@ -62,9 +66,6 @@ REQUIREMENTS = [
 ]
 
 EXTRA_REQUIREMENTS = {
-    'numba': [
-        'numba>=0.38.1',
-    ],
     'test': TEST_REQUIREMENTS,
 }
 
@@ -92,6 +93,7 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        install_path = os.path.join(extdir, 'phik', 'lib')
 
         # required for auto-detection of auxiliary "native" libs
         if not extdir.endswith(os.path.sep):
@@ -103,12 +105,9 @@ class CMakeBuild(build_ext):
         # Can be set with Conda-Build, for example.
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
 
-        # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
-        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
-        # from Python.
         cmake_args = [
             "-Dpybind11_DIR={}".format(pybind11.get_cmake_dir()),
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(extdir),
+            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(install_path),
             "-DPYTHON_EXECUTABLE={}".format(sys.executable),
             "-DPHIK_VERSION_INFO={}".format(self.distribution.get_version()),
             "-DCMAKE_BUILD_TYPE={}".format(cfg),  # not used on MSVC, but no harm
@@ -141,7 +140,7 @@ class CMakeBuild(build_ext):
             # Multi-config generators have a different way to specify configs
             if not single_config:
                 cmake_args += [
-                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
+                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), install_path)
                 ]
                 build_args += ["--config", cfg]
 
@@ -163,6 +162,17 @@ class CMakeBuild(build_ext):
         subprocess.check_call(
             ["cmake", "--build", "."] + build_args, cwd=self.build_temp
         )
+
+        # handle develop install, aka -e flag for pip
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        local_install = os.path.join(root_dir, 'phik', 'lib')
+        os.makedirs(local_install, exist_ok=True)
+        for f in glob.glob(os.path.join(install_path, r'phik_simulation_core*')):
+            print(f'installing {f}')
+            shutil.copy(f, local_install)
+        for f in glob.glob(os.path.join(root_dir, r'phik_simulation_core*')):
+            os.remove(f)
+
 
 COMMAND_OPTIONS = dict()
 EXCLUDE_PACKAGES = []
@@ -245,6 +255,11 @@ setup_args = {
 
 if __name__ == '__main__':
     write_version_py()
+    # Fix CMake cache issue with in-place builds
+    cmake_cache_path = (Path(__file__).resolve().parent / "build")
+    pip_env_re = "^//.*$\n^[^#].*pip-build-env.*$"
+    for i in cmake_cache_path.rglob("CMakeCache.txt"):
+        i.write_text(re.sub(pip_env_re, "", i.read_text(), flags=re.M))
     try:
         # try building with C++ extension:
         setup(ext_modules=EXTERNAL_MODULES, **setup_args)

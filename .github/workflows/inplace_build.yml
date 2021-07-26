@@ -1,4 +1,4 @@
-name: Test Matrix
+name: In tree build
 
 on:
   workflow_dispatch:
@@ -9,12 +9,11 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.platform }} Python ${{ matrix.python-version }}
+    name: ${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
         platform: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
 
     runs-on: ${{ matrix.platform }}
 
@@ -25,14 +24,14 @@ jobs:
 
     - uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.8"
 
     - name: Add requirements
       run: |
         python -m pip install --upgrade pip wheel setuptools jupyter
 
     - name: Build and install
-      run: pip install --verbose ".[test]"
+      run: pip install --use-feature=in-tree-build --verbose ".[test]"
 
     - name: Unit test
       run: pytest tests/phik_python/test_phik.py -v

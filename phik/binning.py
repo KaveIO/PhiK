@@ -16,13 +16,15 @@ from typing import List, Tuple, Union, Optional
 
 import numpy as np
 import pandas as pd
-import warnings
 
 from phik import definitions as defs
 from phik.utils import array_like_to_dataframe, guess_interval_cols
+from phik.data_quality import dq_check_nunique_values
 
 
-def bin_edges(arr: Union[np.ndarray, list, pd.Series], nbins:int, quantile:bool = False) -> np.ndarray:
+def bin_edges(
+    arr: Union[np.ndarray, list, pd.Series], nbins: int, quantile: bool = False
+) -> np.ndarray:
     """
     Create uniform or quantile bin-edges for the input array.
 
@@ -35,16 +37,20 @@ def bin_edges(arr: Union[np.ndarray, list, pd.Series], nbins:int, quantile:bool 
     if quantile:
         quantiles = np.linspace(0, 1, nbins + 1)
         xbins = np.quantile(arr[~np.isnan(arr)], quantiles)
-        xbins[0] -= 1E-14
+        xbins[0] -= 1e-14
     else:
-        xbins = np.linspace(np.min(arr[~np.isnan(arr)]) - 1E-14, np.max(arr[~np.isnan(arr)]), nbins + 1)
+        xbins = np.linspace(
+            np.min(arr[~np.isnan(arr)]) - 1e-14, np.max(arr[~np.isnan(arr)]), nbins + 1
+        )
 
     return xbins
 
 
-def bin_array(arr: Union[np.ndarray, list], bin_edges: Union[np.ndarray, list]) -> Tuple[np.ndarray, list]:
+def bin_array(
+    arr: Union[np.ndarray, list], bin_edges: Union[np.ndarray, list]
+) -> Tuple[np.ndarray, list]:
     """
-    Index the data given the bin_edges. 
+    Index the data given the bin_edges.
 
     Underflow and overflow values are indicated.
 
@@ -61,7 +67,7 @@ def bin_array(arr: Union[np.ndarray, list], bin_edges: Union[np.ndarray, list]) 
     bin_indices = pd.Series(binned_arr).value_counts().index
     for i in range(1, len(bin_edges)):
         if i in bin_indices:
-            bin_labels.append((bin_edges[i-1], bin_edges[i]))
+            bin_labels.append((bin_edges[i - 1], bin_edges[i]))
 
     # NaN values are added to the overflow bin. Restore NaN values:
     binned_arr[np.argwhere(np.isnan(arr))] = np.nan
@@ -75,8 +81,13 @@ def bin_array(arr: Union[np.ndarray, list], bin_edges: Union[np.ndarray, list]) 
     return binned_arr, bin_labels
 
 
-def bin_data(data: pd.DataFrame, cols: Union[list, np.ndarray, tuple]=(), bins:Union[int,list,np.ndarray,dict]=10,
-             quantile: bool=False, retbins: bool=False):
+def bin_data(
+    data: pd.DataFrame,
+    cols: Union[list, np.ndarray, tuple] = (),
+    bins: Union[int, list, np.ndarray, dict] = 10,
+    quantile: bool = False,
+    retbins: bool = False,
+):
     """
     Index the input DataFrame given the bin_edges for the columns specified in cols.
 
@@ -92,7 +103,9 @@ def bin_data(data: pd.DataFrame, cols: Union[list, np.ndarray, tuple]=(), bins:U
     if isinstance(bins, dict):
         for col in cols:
             if col not in bins:
-                raise ValueError('column {0} is not included in bins dictionary.'.format(col))
+                raise ValueError(
+                    "column {0} is not included in bins dictionary.".format(col)
+                )
     elif isinstance(bins, (list, np.ndarray)):
         xbins = bins
 
@@ -106,7 +119,9 @@ def bin_data(data: pd.DataFrame, cols: Union[list, np.ndarray, tuple]=(), bins:U
             xbins = bin_edges(data[col].astype(float), int(bins), quantile=quantile)
         elif isinstance(bins, dict):
             if isinstance(bins[col], (int, float)):
-                xbins = bin_edges(data[col].astype(float), int(bins[col]), quantile=quantile)
+                xbins = bin_edges(
+                    data[col].astype(float), int(bins[col]), quantile=quantile
+                )
             elif isinstance(bins[col], (list, np.ndarray)):
                 xbins = bins[col]
         binned_data[col], bin_labels = bin_array(data[col].astype(float).values, xbins)
@@ -119,7 +134,46 @@ def bin_data(data: pd.DataFrame, cols: Union[list, np.ndarray, tuple]=(), bins:U
     return binned_data
 
 
-def create_correlation_overview_table(vals: List[Tuple[str, str, float]]) -> pd.DataFrame:
+def auto_bin_data(
+    df: pd.DataFrame,
+    interval_cols: Optional[list] = None,
+    bins: Union[int, list, np.ndarray, dict] = 10,
+    quantile: bool = False,
+    dropna: bool = True,
+    verbose: bool = True,
+) -> pd.DataFrame:
+    """
+    Index the input DataFrame with automatic bin_edges and interval columns.
+
+    :param pd.DataFrame data_binned: input data
+    :param list interval_cols: column names of columns with interval variables.
+    :param bins: number of bins, or a list of bin edges (same for all columns), or a dictionary where per column
+        the bins are specified. (default=10)\
+        E.g.: bins = {'mileage':5, 'driver_age':[18,25,35,45,55,65,125]}
+    :param quantile: when bins is an integer, uniform bins (False) or bins based on quantiles (True)
+    :param bool dropna: remove NaN values with True
+    :param bool verbose: if False, do not print all interval columns that are guessed
+    :return: phik correlation matrix
+    """
+    # guess interval columns
+    if interval_cols is None:
+        interval_cols = guess_interval_cols(df, verbose)
+
+    # clean the data
+    df_clean, interval_cols_clean = dq_check_nunique_values(
+        df, interval_cols, dropna=dropna
+    )
+
+    # perform rebinning
+    data_binned, binning_dict = bin_data(
+        df_clean, cols=interval_cols_clean, bins=bins, quantile=quantile, retbins=True
+    )
+    return data_binned, binning_dict
+
+
+def create_correlation_overview_table(
+    vals: List[Tuple[str, str, float]]
+) -> pd.DataFrame:
     """
     Create overview table of phik/significance data.
 
@@ -133,13 +187,20 @@ def create_correlation_overview_table(vals: List[Tuple[str, str, float]]) -> pd.
         ll.append([c0, c1, v])
         ll.append([c1, c0, v])
 
-    corr_matrix = pd.DataFrame(ll, columns=['var1', 'var2', 'vals']).pivot_table(index='var1', columns='var2', values='vals')
+    corr_matrix = pd.DataFrame(ll, columns=["var1", "var2", "vals"]).pivot_table(
+        index="var1", columns="var2", values="vals"
+    )
     corr_matrix.columns.name = None
     corr_matrix.index.name = None
     return corr_matrix
 
 
-def hist2d_from_rebinned_df(data_binned:pd.DataFrame, dropna:bool=True, drop_underflow:bool=True, drop_overflow:bool=True) -> pd.DataFrame:
+def hist2d_from_rebinned_df(
+    data_binned: pd.DataFrame,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+) -> pd.DataFrame:
     """
     Give binned 2d DataFrame of two columns of rebinned input DataFrame
 
@@ -162,16 +223,25 @@ def hist2d_from_rebinned_df(data_binned:pd.DataFrame, dropna:bool=True, drop_und
         data_binned.replace(defs.OF, np.nan, inplace=True)
 
     # create a contingency table
-    df_datahist = data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
+    df_datahist = (
+        data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
+    )
     df_datahist.columns = df_datahist.columns.droplevel()
 
     return df_datahist
 
 
-def hist2d(df: pd.DataFrame, interval_cols:Optional[Union[list, np.ndarray]]=None,
-           bins:Union[int,float,list,np.ndarray,dict]=10,
-           quantile:bool=False, dropna:bool=True, drop_underflow:bool=True,
-           drop_overflow:bool=True, retbins:bool=False, verbose:bool=True) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
+def hist2d(
+    df: pd.DataFrame,
+    interval_cols: Optional[Union[list, np.ndarray]] = None,
+    bins: Union[int, float, list, np.ndarray, dict] = 10,
+    quantile: bool = False,
+    dropna: bool = True,
+    drop_underflow: bool = True,
+    drop_overflow: bool = True,
+    retbins: bool = False,
+    verbose: bool = True,
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
     """
     Give binned 2d DataFrame of two columns of input DataFrame
 
@@ -190,14 +260,19 @@ def hist2d(df: pd.DataFrame, interval_cols:Optional[Union[list, np.ndarray]]=Non
     """
 
     if len(df.columns) != 2:
-        raise ValueError('DataFrame should contain only two columns')
+        raise ValueError("DataFrame should contain only two columns")
 
     if interval_cols is None:
         interval_cols = guess_interval_cols(df, verbose)
 
-    data_binned, binning_dict = bin_data(df, interval_cols, retbins=True, bins=bins, quantile=quantile)
+    data_binned, binning_dict = bin_data(
+        df, interval_cols, retbins=True, bins=bins, quantile=quantile
+    )
     datahist = hist2d_from_rebinned_df(
-        data_binned, dropna=dropna, drop_underflow=drop_underflow, drop_overflow=drop_overflow
+        data_binned,
+        dropna=dropna,
+        drop_underflow=drop_underflow,
+        drop_overflow=drop_overflow,
     )
 
     if retbins:
@@ -206,7 +281,9 @@ def hist2d(df: pd.DataFrame, interval_cols:Optional[Union[list, np.ndarray]]=Non
     return datahist
 
 
-def hist2d_from_array(x: Union[pd.Series, list, np.ndarray], y: [pd.Series, list, np.ndarray], **kwargs) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
+def hist2d_from_array(
+    x: Union[pd.Series, list, np.ndarray], y: [pd.Series, list, np.ndarray], **kwargs
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
     """
     Give binned 2d DataFrame of two input arrays
 

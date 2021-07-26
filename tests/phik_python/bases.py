@@ -9,14 +9,14 @@ class NotebookTest(unittest.TestCase):
     """Unit test notebook"""
 
     def run_notebook(self, notebook):
-        """ Test notebook """
+        """Test notebook"""
 
         # load notebook
         with open(notebook) as f:
             nb = nbformat.read(f, as_version=4)
 
         # execute notebook
-        ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
+        ep = ExecutePreprocessor(timeout=600, kernel_name="python3")
         try:
             ep.preprocess(nb, {})
             status = True
@@ -24,8 +24,8 @@ class NotebookTest(unittest.TestCase):
             # store if failed
             status = False
             executed_notebook = os.getcwd() + os.sep + notebook.split(os.sep)[-1]
-            with open(executed_notebook, mode='wt') as f:
+            with open(executed_notebook, mode="wt") as f:
                 nbformat.write(nb, f)
 
         # check status
-        self.assertTrue(status, 'Notebook execution failed (%s)' % notebook)
+        self.assertTrue(status, "Notebook execution failed (%s)" % notebook)
