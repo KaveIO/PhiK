@@ -21,7 +21,7 @@ import pandas as pd
 import numpy as np
 from phik import resources, bivariate
 from phik.simulation import sim_2d_data_patefield
-from phik.binning import auto_bin_data
+from phik.binning import auto_bin_data, bin_data
 from phik.phik import phik_observed_vs_expected_from_rebinned_df, phik_from_hist2d
 from phik.statistics import get_dependent_frequency_estimates
 
@@ -325,3 +325,21 @@ class PhiKTest(unittest.TestCase):
         mean0, mean1 = res.mean(1)
         self.assertTrue(np.isclose(mean0, 105.46))
         self.assertTrue(np.isclose(mean1, 91.18))
+
+    def test_binning_bin_data_bins_tyes(self):
+        # Non regression test
+        # https://github.com/KaveIO/PhiK/issues/28
+        df = pd.DataFrame({"x": np.random.randn(10)})
+        bins_int = np.arange(5, 11, 1)
+        bins_float = np.arange(5, 11, 1.0)
+        bins_dict_int = {"x": np.uint8(10)}
+        bins_dict_float = {"x": np.float32(10.3)}
+
+        for bins in bins_int:
+            bin_data(df, cols=["x"], bins=bins)
+
+        for bins in bins_float:
+            bin_data(df, cols=["x"], bins=bins)
+
+        bin_data(df, cols=["x"], bins=bins_dict_int)
+        bin_data(df, cols=["x"], bins=bins_dict_float)
