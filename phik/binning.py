@@ -115,20 +115,25 @@ def bin_data(
 
     bins_dict = {}
     for col in cols:
-        if np.issubdtype(type(bins), np.integer) or np.issubdtype(type(bins), np.floating):
+        if np.issubdtype(type(bins), np.integer) or np.issubdtype(
+            type(bins), np.floating
+        ):
             xbins = bin_edges(data[col].astype(float), int(bins), quantile=quantile)
         elif isinstance(bins, dict):
-            if np.issubdtype(type(bins[col]), np.integer) or np.issubdtype(type(bins[col]), np.floating):
+            if np.issubdtype(type(bins[col]), np.integer) or np.issubdtype(
+                type(bins[col]), np.floating
+            ):
                 xbins = bin_edges(
                     data[col].astype(float), int(bins[col]), quantile=quantile
                 )
             elif isinstance(bins[col], (list, np.ndarray)):
                 xbins = bins[col]
         elif xbins is None:
-            raise ValueError("Unexpected type for bins. The found type was '%s'" % str(type(bins)))
+            raise ValueError(
+                "Unexpected type for bins. The found type was '%s'" % str(type(bins))
+            )
 
         binned_data[col], bin_labels = bin_array(data[col].astype(float).values, xbins)
-
         if retbins:
             bins_dict[col] = bin_labels
 
