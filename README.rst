@@ -47,7 +47,7 @@ calculate the Phi_K correlation matrix for a spark dataframe.
 Check it out
 ============
 
-The Phi_K library requires Python 3 and is pip friendly. To get started, simply do:
+The Phi_K library requires Python >= 3.7 and is pip friendly. To get started, simply do:
 
 .. code-block:: bash
 

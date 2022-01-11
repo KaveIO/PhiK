@@ -218,7 +218,7 @@ setup_args = {
     'description': "Phi_K correlation analyzer library",
     'long_description': long_description,
     'long_description_content_type': "text/x-rst",
-    'python_requires': '>=3.6',
+    'python_requires': '>=3.7',
     'packages': find_packages(exclude=EXCLUDE_PACKAGES),
     # Setuptools requires that package data are located inside the package.
     # This is a feature and not a bug, see
