@@ -14,5 +14,5 @@ The tutorials are available in the ``phik/notebooks`` directory. We have:
 
 You can open these notebooks directly:
 
-* Run them interactively at `MyBinder <https://mybinder.org/v2/gh/KaveIO/PhiK/master?filepath=python%2Fphik%2Fnotebooks>`_.
-* View them statically: `basic tutorial <http://nbviewer.ipython.org/urls/raw.github.com/kaveio/phik/master/python/phik/notebooks/phik_tutorial_basic.ipynb>`_ and  the `advanced tutorial <http://nbviewer.ipython.org/urls/raw.github.com/kaveio/phik/master/python/phik/notebooks/phik_tutorial_advanced.ipynb>`_ and the `spark tutorial <http://nbviewer.ipython.org/urls/raw.github.com/kaveio/phik/master/python/phik/notebooks/phik_tutorial_spark.ipynb>`_.
+* Run them interactively at `MyBinder <https://mybinder.org/v2/gh/KaveIO/PhiK/master?filepath=phik%2Fnotebooks>`_.
+* View them statically: `basic tutorial <http://nbviewer.ipython.org/urls/raw.github.com/kaveio/phik/master/phik/notebooks/phik_tutorial_basic.ipynb>`_ and  the `advanced tutorial <http://nbviewer.ipython.org/urls/raw.github.com/kaveio/phik/master/phik/notebooks/phik_tutorial_advanced.ipynb>`_ and the `spark tutorial <http://nbviewer.ipython.org/urls/raw.github.com/kaveio/phik/master/phik/notebooks/phik_tutorial_spark.ipynb>`_.
