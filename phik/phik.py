@@ -352,15 +352,27 @@ def global_phik_array(
         dropna=dropna,
         verbose=verbose,
     )
-
-    return global_phik_from_rebinned_df(
+    
+    vals, labels = global_phik_from_rebinned_df(
         data_binned,
         noise_correction=noise_correction,
         dropna=dropna,
         drop_underflow=drop_underflow,
         drop_overflow=drop_overflow,
         njobs=njobs,
-    )
+    )        
+    vals = np.where(
+        (pd.isnull(vals)) | (vals<=1), 
+        vals, 
+        np.ones(shape=vals.shape)
+        )
+    vals = np.where(
+        (pd.isnull(vals)) | (vals>0), 
+        vals, 
+        np.zeros(shape=vals.shape)
+        )
+
+    return vals, labels
 
 
 def phik_from_array(
