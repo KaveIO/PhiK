@@ -18,7 +18,7 @@ import numpy as np
 import itertools
 import pandas as pd
 from joblib import Parallel, delayed
-from numpy.linalg import inv
+from scipy.linalg import inv, pinv
 
 from phik import definitions as defs
 from .bivariate import phik_from_chi2
@@ -300,10 +300,20 @@ def global_phik_from_rebinned_df(
         njobs=njobs,
     )
     V = phik_overview.values
-    Vinv = inv(V)
-    global_correlations = np.array(
-        [[np.sqrt(1 - 1 / (V[i][i] * Vinv[i][i]))] for i in range(V.shape[0])]
-    )
+    # check if V is ill-conditioned
+    if np.linalg.cond(V) > np.finfo(V.dtype).eps:
+        Vinv = inv(V)
+    else:
+        # use pseudo inverse to try handle finite but ill-conditioned arrays;
+        # non-finite values will still trigger an exception
+        Vinv = pinv(V)
+    global_correlations = np.sqrt(
+        1 - (1 / (np.diagonal(V) * np.diagonal(Vinv)))
+    )[:, None]
+    # cap values to [0.0, 1.0] domain
+    # https://github.com/KaveIO/PhiK/issues/37
+    global_correlations[global_correlations > 1.0] = 1.0
+    global_correlations[global_correlations < 0.0] = 0.0
     return global_correlations, phik_overview.index.values
 
 
