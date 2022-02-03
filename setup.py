@@ -163,9 +163,3 @@ if __name__ == '__main__':
         # If this new 'setup' call doesn't fail, the module
         # will be successfully installed, without the C++ extension :
         setup(**setup_args)
-
-    # fix issue with CMake cache when building in-tree multiple times
-    # https://github.com/scikit-build/scikit-build/issues/628
-    build_dir = Path(skbuild.constants.SKBUILD_DIR()).parent
-    if build_dir.exists():
-        shutil.rmtree(build_dir)

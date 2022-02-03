@@ -2,7 +2,7 @@
 requires = [
     "setuptools",
     "wheel",
-    "scikit-build",
+    "scikit-build>=0.13",
     "ninja",
     "cmake>=3.16",
     "pybind11>=2.8.1"
