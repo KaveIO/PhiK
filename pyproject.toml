@@ -5,7 +5,7 @@ requires = [
     # "scikit-build>=0.13",
     # test fix
     "scikit-build @ git+https://github.com/scikit-build/scikit-build@c18845a1c8a0af9fd9f04a531b501a17650bfa98",
-    "ninja",
+    "ninja; platform_system!='Windows'",
     "cmake>=3.16",
     "pybind11>=2.8.1"
 ]
