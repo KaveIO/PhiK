@@ -22,19 +22,10 @@ import subprocess
 from pathlib import Path
 from warnings import warn
 from setuptools import find_packages
-from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
-from distutils.errors import CompileError, DistutilsExecError, DistutilsPlatformError
+from setuptools import setup
+import skbuild
+from skbuild import setup as sk_setup
 import pybind11
-
-ext_errors = (
-    CompileError,
-    DistutilsExecError,
-    DistutilsPlatformError,
-    IOError,
-    SystemExit
-)
-
 
 NAME = 'phik'
 
@@ -72,112 +63,7 @@ EXTRA_REQUIREMENTS = {
 if DEV:
     REQUIREMENTS += TEST_REQUIREMENTS
 
-
-# Convert distutils Windows platform specifiers to CMake -A arguments
-PLAT_TO_CMAKE = {
-    "win32": "Win32",
-    "win-amd64": "x64",
-    "win-arm32": "ARM",
-    "win-arm64": "ARM64",
-}
-
-# A CMakeExtension needs a sourcedir instead of a file list.
-# The name must be the _single_ output extension from the CMake build.
-# If you need multiple extensions, see scikit-build.
-class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=""):
-        Extension.__init__(self, name, sources=[])
-        self.sourcedir = os.path.abspath(sourcedir)
-
-
-class CMakeBuild(build_ext):
-    def build_extension(self, ext):
-        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-        install_path = os.path.join(extdir, 'phik', 'lib')
-
-        # required for auto-detection of auxiliary "native" libs
-        if not extdir.endswith(os.path.sep):
-            extdir += os.path.sep
-
-        cfg = "Debug" if self.debug else "Release"
-
-        # CMake lets you override the generator - we need to check this.
-        # Can be set with Conda-Build, for example.
-        cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
-
-        cmake_args = [
-            "-Dpybind11_DIR={}".format(pybind11.get_cmake_dir()),
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(install_path),
-            "-DPYTHON_EXECUTABLE={}".format(sys.executable),
-            "-DPHIK_VERSION_INFO={}".format(self.distribution.get_version()),
-            "-DCMAKE_BUILD_TYPE={}".format(cfg),  # not used on MSVC, but no harm
-        ]
-        build_args = []
-
-        if self.compiler.compiler_type != "msvc":
-            # Using Ninja-build since it a) is available as a wheel and b)
-            # multithreads automatically. MSVC would require all variables be
-            # exported for Ninja to pick it up, which is a little tricky to do.
-            # Users can override the generator with CMAKE_GENERATOR in CMake
-            # 3.15+.
-            if not cmake_generator:
-                cmake_args += ["-GNinja"]
-
-        else:
-
-            # Single config generators are handled "normally"
-            single_config = any(x in cmake_generator for x in {"NMake", "Ninja"})
-
-            # CMake allows an arch-in-generator style for backward compatibility
-            contains_arch = any(x in cmake_generator for x in {"ARM", "Win64"})
-
-            # Specify the arch if using MSVC generator, but only if it doesn't
-            # contain a backward-compatibility arch spec already in the
-            # generator name.
-            if not single_config and not contains_arch:
-                cmake_args += ["-A", PLAT_TO_CMAKE[self.plat_name]]
-
-            # Multi-config generators have a different way to specify configs
-            if not single_config:
-                cmake_args += [
-                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), install_path)
-                ]
-                build_args += ["--config", cfg]
-
-        # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
-        # across all generators.
-        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
-            # self.parallel is a Python 3 only way to set parallel jobs by hand
-            # using -j in the build_ext call, not supported by pip or PyPA-build.
-            if hasattr(self, "parallel") and self.parallel:
-                # CMake 3.12+ only.
-                build_args += ["-j{}".format(self.parallel)]
-
-        if not os.path.exists(self.build_temp):
-            os.makedirs(self.build_temp)
-
-        subprocess.check_call(
-            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp
-        )
-        subprocess.check_call(
-            ["cmake", "--build", "."] + build_args, cwd=self.build_temp
-        )
-
-        # handle develop install, aka -e flag for pip
-        root_dir = os.path.dirname(os.path.abspath(__file__))
-        local_install = os.path.join(root_dir, 'phik', 'lib')
-        os.makedirs(local_install, exist_ok=True)
-        for f in glob.glob(os.path.join(install_path, r'phik_simulation_core*')):
-            print(f'installing {f}')
-            shutil.copy(f, local_install)
-        for f in glob.glob(os.path.join(root_dir, r'phik_simulation_core*')):
-            os.remove(f)
-
-
-COMMAND_OPTIONS = dict()
 EXCLUDE_PACKAGES = []
-CMD_CLASS = {"build_ext": CMakeBuild}
-EXTERNAL_MODULES = [CMakeExtension('phik_simulation_core')]
 
 # read the contents of readme file
 with open("README.rst", encoding="utf-8") as f:
@@ -233,8 +119,6 @@ setup_args = {
     'install_requires': REQUIREMENTS,
     'extras_require': EXTRA_REQUIREMENTS,
     'tests_require': TEST_REQUIREMENTS,
-    'cmdclass': CMD_CLASS,
-    'command_options': COMMAND_OPTIONS,
     'zip_safe': False,
     'classifiers': [
         "Programming Language :: Python :: 3",
@@ -253,17 +137,20 @@ setup_args = {
     }
 }
 
+sk_build_kwargs = {
+    'cmake_args' : [
+        f"-Dpybind11_DIR:STRING={pybind11.get_cmake_dir()}",
+        "-DPYTHON_EXECUTABLE={}".format(sys.executable),
+        f"-DPHIK_VERSION_INFO={FULL_VERSION}",
+    ]
+}
+
 if __name__ == '__main__':
     write_version_py()
-    # Fix CMake cache issue with in-place builds
-    cmake_cache_path = (Path(__file__).resolve().parent / "build")
-    pip_env_re = "^//.*$\n^[^#].*pip-build-env.*$"
-    for i in cmake_cache_path.rglob("CMakeCache.txt"):
-        i.write_text(re.sub(pip_env_re, "", i.read_text(), flags=re.M))
     try:
         # try building with C++ extension:
-        setup(ext_modules=EXTERNAL_MODULES, **setup_args)
-    except ext_errors as ex:
+        sk_setup(**setup_args, **sk_build_kwargs)
+    except Exception as ex:
         warn(
             '\n---------------------------------------------\n'
             'WARNING\n\n'
@@ -273,10 +160,6 @@ if __name__ == '__main__':
         )
 
         ## Retry to install the module without extension :
-        # Remove any previously defined build_ext command class.
-        if 'build_ext' in setup_args['cmdclass']:
-            del setup_args['cmdclass']['build_ext']
-
         # If this new 'setup' call doesn't fail, the module
         # will be successfully installed, without the C++ extension :
         setup(**setup_args)
