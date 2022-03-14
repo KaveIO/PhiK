@@ -2,7 +2,7 @@
 Phi_K Correlation Analyzer Library
 ==================================
 
-* Version: 0.12.0. Released: Jul 2021
+* Version: 0.12.1. Released: Mar 2022
 * Release notes: https://github.com/KaveIO/PhiK/blob/master/CHANGES.rst
 * Repository: https://github.com/kaveio/phik
 * Documentation: https://phik.readthedocs.io

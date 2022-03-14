@@ -231,8 +231,8 @@ def phik_matrix(
 
     :param pd.DataFrame data_binned: input data
     :param list interval_cols: column names of columns with interval variables.
-    :param bins: number of bins, or a list of bin edges (same for all columns), or a dictionary where per column the bins are specified. (default=10)\
-    E.g.: bins = {'mileage':5, 'driver_age':[18,25,35,45,55,65,125]}
+    :param bins: number of bins, or a list of bin edges (same for all columns), or a dictionary where per column the\
+    bins are specified (default=10). E.g.: bins = {'mileage':5, 'driver_age':[18,25,35,45,55,65,125]}
     :param quantile: when bins is an integer, uniform bins (False) or bins based on quantiles (True)
     :param bool noise_correction: apply noise correction in phik calculation
     :param bool dropna: remove NaN values with True
@@ -272,13 +272,22 @@ def global_phik_from_rebinned_df(
     njobs: int = -1,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Global correlation values of bivariate gaussian derived from chi2-value from rebinned df
+    Global correlation values of variables, obtained from the PhiK correlation matrix.
 
-    Chi2-value gets converted into correlation coefficient of bivariate gauss
-    with correlation value rho, assuming giving binning and number of records.
-    Correlation coefficient value is between 0 and 1.
+    A global correlation value is a simple approximation of how well one feature can be modeled in terms of all others.
 
-    Bivariate gaussian's range is set to [-5,5] by construction.
+    The global correlation coefficient is a number between zero and one, obtained from the PhiK correlation matrix,
+    that gives the highest possible correlation between a variable and the linear combination of all other variables.
+    See PhiK paper or for original definition: https://inspirehep.net/literature/101965
+
+    Global PhiK uses two important simplifications / approximations:
+    - The variables are assumed to belong to a multinormal distribution, which is typically not the case.
+    - The correlation should be a Pearson correlation matrix, allowing for negative values, which is not the case
+      with PhiK correlations (which are positive by construction).
+    To correct for these, the Global PhiK values are artificially capped between 0 and 1.
+
+    Still, the Global PhiK values are useful, quick, simple estimates that are interesting in an exploratory study.
+    For a solid, trustworthy estimate be sure to use a classifier or regression model instead.
 
     :param pd.DataFrame data_binned: rebinned input data
     :param bool noise_correction: apply noise correction in phik calculation
@@ -310,7 +319,7 @@ def global_phik_from_rebinned_df(
     global_correlations = np.sqrt(
         1 - (1 / (np.diagonal(V) * np.diagonal(Vinv)))
     )[:, None]
-    # cap values to [0.0, 1.0] domain
+    # Cap values to [0.0, 1.0] domain. See issue:
     # https://github.com/KaveIO/PhiK/issues/37
     global_correlations[global_correlations > 1.0] = 1.0
     global_correlations[global_correlations < 0.0] = 0.0
@@ -330,18 +339,27 @@ def global_phik_array(
     njobs: int = -1,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Global correlation values of bivariate gaussian derived from chi2-value
+    Global correlation values of variables, obtained from the PhiK correlation matrix.
 
-    Chi2-value gets converted into correlation coefficient of bivariate gauss
-    with correlation value rho, assuming giving binning and number of records.
-    Correlation coefficient value is between 0 and 1.
+    A global correlation value is a simple approximation of how well one feature can be modeled in terms of all others.
 
-    Bivariate gaussian's range is set to [-5,5] by construction.
+    The global correlation coefficient is a number between zero and one, obtained from the PhiK correlation matrix,
+    that gives the highest possible correlation between a variable and the linear combination of all other variables.
+    See PhiK paper or for original definition: https://inspirehep.net/literature/101965
+
+    Global PhiK uses two important simplifications / approximations:
+    - The variables are assumed to belong to a multinormal distribution, which is typically not the case.
+    - The correlation should be a Pearson correlation matrix, allowing for negative values, which is not the case
+      with PhiK correlations (which are positive by construction).
+    To correct for these, the Global PhiK values are artificially capped between 0 and 1.
+
+    Still, the Global PhiK values are useful, quick, simple estimates that are interesting in an exploratory study.
+    For a solid, trustworthy estimate be sure to use a classifier or regression model instead.
 
     :param pd.DataFrame data_binned: input data
     :param list interval_cols: column names of columns with interval variables.
-    :param bins: number of bins, or a list of bin edges (same for all columns), or a dictionary where per column the bins are specified. (default=10)\
-    E.g.: bins = {'mileage':5, 'driver_age':[18,25,35,45,55,65,125]}
+    :param bins: number of bins, or a list of bin edges (same for all columns), or a dictionary where per column the\
+    bins are specified (default=10). E.g.: bins = {'mileage':5, 'driver_age':[18,25,35,45,55,65,125]}
     :param quantile: when bins is an integer, uniform bins (False) or bins based on quantiles (True)
     :param bool noise_correction: apply noise correction in phik calculation
     :param bool dropna: remove NaN values with True
@@ -396,8 +414,8 @@ def phik_from_array(
     :param x: array-like input
     :param y: array-like input
     :param num_vars: list of numeric variables which need to be binned, e.g. ['x'] or ['x','y']
-    :param bins: number of bins, or a list of bin edges (same for all columns), or a dictionary where per column the bins are specified. (default=10)\
-    E.g.: bins = {'mileage':5, 'driver_age':[18,25,35,45,55,65,125]}
+    :param bins: number of bins, or a list of bin edges (same for all columns), or a dictionary where per column the\
+    bins are specified (default=10). E.g.: bins = {'mileage':5, 'driver_age':[18,25,35,45,55,65,125]}
     :param quantile: when bins is an integer, uniform bins (False) or bins based on quantiles (True)
     :param bool noise_correction: apply noise correction in phik calculation
     :param bool dropna: remove NaN values with True

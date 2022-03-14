@@ -13,17 +13,10 @@ modification, are permitted according to the terms listed in the file
 LICENSE.
 """
 
-import re
-import os
 import sys
-import glob
-import shutil
-import subprocess
-from pathlib import Path
 from warnings import warn
 from setuptools import find_packages
 from setuptools import setup
-import skbuild
 from skbuild import setup as sk_setup
 import pybind11
 
@@ -31,10 +24,10 @@ NAME = 'phik'
 
 MAJOR = 0
 REVISION = 12
-PATCH = 0
+PATCH = 1
 DEV = False
 
-# note: also update README.rst
+# note: also update README.rst, CHANGES.rst
 
 VERSION = '{major}.{revision}.{patch}'.format(major=MAJOR, revision=REVISION, patch=PATCH)
 FULL_VERSION = VERSION
@@ -68,6 +61,7 @@ EXCLUDE_PACKAGES = []
 # read the contents of readme file
 with open("README.rst", encoding="utf-8") as f:
     long_description = f.read()
+
 
 def write_version_py(filename: str = 'phik/version.py') -> None:
     """Write package version to version.py.
@@ -110,10 +104,7 @@ setup_args = {
     # This is a feature and not a bug, see
     # http://setuptools.readthedocs.io/en/latest/setuptools.html#non-package-data-files
     'package_data': {
-        NAME.lower(): [
-          'data/*',
-          'notebooks/phik_tutorial*.ipynb',
-      ]
+        NAME.lower(): ['data/*', 'notebooks/phik_tutorial*.ipynb', ]
     },
     'include_package_data': True,
     'install_requires': REQUIREMENTS,
@@ -138,7 +129,7 @@ setup_args = {
 }
 
 sk_build_kwargs = {
-    'cmake_args' : [
+    'cmake_args': [
         f"-Dpybind11_DIR:STRING={pybind11.get_cmake_dir()}",
         "-DPYTHON_EXECUTABLE={}".format(sys.executable),
         f"-DPHIK_VERSION_INFO={FULL_VERSION}",
@@ -159,7 +150,7 @@ if __name__ == '__main__':
             '\n---------------------------------------------\n'
         )
 
-        ## Retry to install the module without extension :
+        # # Retry to install the module without extension :
         # If this new 'setup' call doesn't fail, the module
         # will be successfully installed, without the C++ extension :
         setup(**setup_args)
