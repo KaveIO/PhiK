@@ -2,6 +2,15 @@
 Release notes
 =============
 
+Version 0.12.1, Mar 2022
+------------------------
+
+- Two fixes to make calculation of global phik robust: global phik capped in range [0, 1],
+  and check for successful correlation matrix inversion.
+- Migration to to scikit-build 0.13.1.
+- Support wheels for Python 3.10.
+
+
 Version 0.12.0, July 2021
 -------------------------
 
