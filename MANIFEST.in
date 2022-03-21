@@ -2,6 +2,8 @@ include NOTICE
 include LICENSE
 include CMakeLists.txt
 include phik/simcore/CMakeLists.txt
+include pyproject.toml
+include setup.py
 recursive-include phik *.hpp
 recursive-include phik *.cpp
 

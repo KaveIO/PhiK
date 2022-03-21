@@ -2,6 +2,12 @@
 Release notes
 =============
 
+Version 0.12.2, Mar 2022
+------------------------
+
+- Fix missing setup.py and pyproject.toml in source distribution
+- Support wheels ARM MacOS (Apple silicone)
+
 Version 0.12.1, Mar 2022
 ------------------------
 
