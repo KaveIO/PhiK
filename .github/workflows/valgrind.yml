@@ -53,7 +53,7 @@ jobs:
           
       - name: Install
         run: |
-          CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug" pip install . -v
+          CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug -DPHIK_BUILDING_WHEELS=ON" pip install . -v
 
       - name: Test
         run: |
