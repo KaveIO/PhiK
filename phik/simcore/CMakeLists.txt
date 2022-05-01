@@ -16,6 +16,8 @@ ADD_LIBRARY(_asa159
 )
 
 TARGET_INCLUDE_DIRECTORIES(_asa159 PRIVATE ${SUBPATH})
+TARGET_COMPILE_OPTIONS(_asa159 PRIVATE "$<$<CONFIG:RELEASE>:${PHIK_RELEASE_FLAGS}>")
+
 # ##############################################################################
 #                                  EXECUTABLE                                  #
 # ##############################################################################
@@ -27,6 +29,7 @@ pybind11_add_module(${MODNAME}
 )
 
 TARGET_COMPILE_DEFINITIONS(${MODNAME} PRIVATE VERSION_INFO=${PHIK_VERSION_INFO})
+TARGET_COMPILE_OPTIONS(${MODNAME} PRIVATE "$<$<CONFIG:RELEASE>:${PHIK_RELEASE_FLAGS}>")
 
 TARGET_INCLUDE_DIRECTORIES(${MODNAME}
     PUBLIC
