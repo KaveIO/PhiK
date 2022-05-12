@@ -132,7 +132,7 @@ sk_build_kwargs = {
     'cmake_args': [
         f"-Dpybind11_DIR:STRING={pybind11.get_cmake_dir()}",
         "-DPYTHON_EXECUTABLE={}".format(sys.executable),
-        f"-DPHIK_VERSION_INFO={FULL_VERSION}",
+        f"-DPHIK_VERSION_INFO={VERSION}",
     ]
 }
 
