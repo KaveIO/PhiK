@@ -2,6 +2,11 @@
 Release notes
 =============
 
+Version 0.12.3, Dec 2022
+------------------------
+
+- Add support for Python 3.11
+
 Version 0.12.2, Mar 2022
 ------------------------
 
