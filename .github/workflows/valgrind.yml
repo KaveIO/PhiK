@@ -29,8 +29,6 @@ jobs:
     needs: pre_job
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -53,6 +51,8 @@ jobs:
           
       - name: Install
         run: |
+          # temp fix for Valgrind issue with later versions
+          pip install scipy==1.9.1
           CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug" pip install . -v
 
       - name: Test
