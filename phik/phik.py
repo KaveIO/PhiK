@@ -196,7 +196,7 @@ def _calc_phik(
     if c0 == c1:
         return c0, c1, 1.0
 
-    datahist = data_binned.groupby([c0, c1])[c0].count().to_frame().unstack().fillna(0)
+    datahist = data_binned.groupby([c0, c1], observed=False)[c0].count().to_frame().unstack().fillna(0)
 
     # If 0 or only 1 values for one of the two variables, it is not possible to calculate phik.
     # This check needs to be done after creation of OF, UF and NaN bins.
