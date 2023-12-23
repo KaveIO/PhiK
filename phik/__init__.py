@@ -1,15 +1,25 @@
 # flake8: noqa
-from phik.version import version as __version__
+import importlib.metadata
 
-# pandas dataframe decorators
 from phik import decorators
+from phik.outliers import (
+    outlier_significance_from_array,
+    outlier_significance_matrices,
+    outlier_significance_matrix,
+)
+from phik.phik import global_phik_array, phik_from_array, phik_matrix
+from phik.significance import significance_from_array, significance_matrix
 
-# array functions
-from phik.phik import phik_from_array
-from phik.significance import significance_from_array
-from phik.outliers import outlier_significance_from_array
+__version__ = importlib.metadata.version("phik")
 
-# dataframe functions
-from phik.phik import phik_matrix, global_phik_array
-from phik.significance import significance_matrix
-from phik.outliers import outlier_significance_matrices, outlier_significance_matrix
+__all__ = [
+    "decorators",
+    "phik_from_array",
+    "significance_from_array",
+    "outlier_significance_from_array",
+    "phik_matrix",
+    "global_phik_array",
+    "significance_matrix",
+    "outlier_significance_matrices",
+    "outlier_significance_matrix",
+]
