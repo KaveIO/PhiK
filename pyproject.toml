@@ -1,10 +1,51 @@
 [build-system]
-requires = [
-    "setuptools>=68",
-    "wheel",
-    "scikit-build>=0.14.1",
-    "ninja; platform_system!='Windows'",
-    "cmake>=3.16",
-    "pybind11>=2.8.1"
+requires = ["scikit-build-core>=0.3.3", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "phik"
+version = "0.12.4"
+description = "Phi_K correlation analyzer library"
+readme = "README.rst"
+authors = [{ name = "KPMG N.V. The Netherlands", email = "kave@kpmg.com" }]
+requires-python = ">=3.8"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
 ]
-build-backend = "setuptools.build_meta"
+
+dependencies = [
+  "numpy>=1.18.0",
+  "scipy>=1.5.2",
+  "pandas>=0.25.1",
+  "matplotlib>=2.2.3",
+  "joblib>=0.14.1",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=4.0.2",
+  "pytest-pylint>=0.13.0",
+  "nbconvert>=5.3.1",
+  "jupyter_client>=5.2.3",
+]
+
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
+cmake.build-type = "Release"
+logging.level = "WARNING"
+sdist.include = ["phik/simcore", "CMakeLists.txt"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+xfail_strict = true
+log_cli_level = "INFO"
+filterwarnings = ["error"]
+testpaths = ["tests"]
