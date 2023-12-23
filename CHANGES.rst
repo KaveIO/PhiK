@@ -2,6 +2,12 @@
 Release notes
 =============
 
+Version 0.12.4, Dec 2023
+------------------------
+
+- Drop support for Python 3.7, reached end of life.
+- Add support for Python 3.12
+
 Version 0.12.3, Dec 2022
 ------------------------
 

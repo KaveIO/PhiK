@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=68",
     "wheel",
     "scikit-build>=0.14.1",
     "ninja; platform_system!='Windows'",

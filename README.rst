@@ -2,7 +2,7 @@
 Phi_K Correlation Analyzer Library
 ==================================
 
-* Version: 0.12.3. Released: Dec 2022
+* Version: 0.12.4. Released: Dec 2023
 * Release notes: https://github.com/KaveIO/PhiK/blob/master/CHANGES.rst
 * Repository: https://github.com/kaveio/phik
 * Documentation: https://phik.readthedocs.io
@@ -47,7 +47,7 @@ calculate the Phi_K correlation matrix for a spark dataframe.
 Check it out
 ============
 
-The Phi_K library requires Python >= 3.7 and is pip friendly. To get started, simply do:
+The Phi_K library requires Python >= 3.8 and is pip friendly. To get started, simply do:
 
 .. code-block:: bash
 
