@@ -24,7 +24,7 @@ NAME = 'phik'
 
 MAJOR = 0
 REVISION = 12
-PATCH = 3
+PATCH = 4
 DEV = False
 
 # note: also update README.rst, CHANGES.rst
@@ -47,6 +47,7 @@ REQUIREMENTS = [
     'pandas>=0.25.1',
     'matplotlib>=2.2.3',
     'joblib>=0.14.1',
+    'setuptools>=68',
 ]
 
 EXTRA_REQUIREMENTS = {
@@ -98,7 +99,7 @@ setup_args = {
     'description': "Phi_K correlation analyzer library",
     'long_description': long_description,
     'long_description_content_type': "text/x-rst",
-    'python_requires': '>=3.7',
+    'python_requires': '>=3.8',
     'packages': find_packages(exclude=EXCLUDE_PACKAGES),
     # Setuptools requires that package data are located inside the package.
     # This is a feature and not a bug, see
