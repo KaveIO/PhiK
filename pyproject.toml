@@ -40,7 +40,7 @@ sdist.include = ["phik/simcore", "CMakeLists.txt"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+addopts = ["-ra"]
 xfail_strict = true
 log_cli_level = "INFO"
 filterwarnings = ["error"]
