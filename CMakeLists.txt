@@ -19,7 +19,7 @@ set(SUBPATH ${PROJECT_SOURCE_DIR}/phik/simcore/)
 # build ASA159 library                                #
 # ##############################################################################
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif()
 
 add_library(_asa159 OBJECT ${SUBPATH}/asa159.cpp)
@@ -37,6 +37,10 @@ target_compile_definitions(_phik_simulation_core
 target_include_directories(
   _phik_simulation_core PUBLIC $<INSTALL_INTERFACE:include>
                                $<BUILD_INTERFACE:${SUBPATH}>)
+if(PHIK_MBUILD)
+  set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}")
+endif()
+
 install(TARGETS _phik_simulation_core LIBRARY DESTINATION "${PROJECT_NAME}/lib")
 
 # Quiet a warning, since this project is only valid with SKBUILD
