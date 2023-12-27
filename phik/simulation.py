@@ -18,12 +18,8 @@ from joblib import Parallel, delayed
 
 from .statistics import get_dependent_frequency_estimates
 from .statistics import get_chi2_using_dependent_frequency_estimates
+from phik.simcore import CPP_SUPPORT, _sim_2d_data_patefield
 
-try:
-    from phik.simcore import _sim_2d_data_patefield
-    CPP_SUPPORT = True
-except ImportError:
-    CPP_SUPPORT = False
 
 NUMPY_INT_MAX = np.iinfo(np.int32).max - 1
 
