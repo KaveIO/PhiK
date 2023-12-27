@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...3.27)
+cmake_minimum_required(VERSION 3.17...3.27)
 
 # Scikit-build-core sets these values for you, or you can just hard-code the
 # name and version.
@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 14)
 # Define CMAKE_INSTALL_xxx: LIBDIR, INCLUDEDIR
 include(GNUInstallDirs)
 
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 set(SUBPATH ${PROJECT_SOURCE_DIR}/phik/simcore/)
 
