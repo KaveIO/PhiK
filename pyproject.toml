@@ -26,15 +26,11 @@ dependencies = [
   "pandas>=0.25.1",
   "matplotlib>=2.2.3",
   "joblib>=0.14.1",
+  "setuptools>=68;python_version=='3.12'",
 ]
 
 [project.optional-dependencies]
-test = [
-  "pytest>=4.0.2",
-  "pytest-pylint>=0.13.0",
-  "nbconvert>=5.3.1",
-  "jupyter_client>=5.2.3",
-]
+test = ["pytest>=4.0.2", "pytest-pylint>=0.13.0"]
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
