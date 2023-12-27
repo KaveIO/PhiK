@@ -17,8 +17,8 @@ LICENSE.
 import warnings
 
 import numpy as np
-from scipy.stats import mvn
 from scipy import optimize
+from scipy.stats._mvn import mvnun
 
 
 def _mvn_un(rho: float, lower: tuple, upper: tuple) -> float:
@@ -33,7 +33,7 @@ def _mvn_un(rho: float, lower: tuple, upper: tuple) -> float:
     """
     mu = np.array([0.0, 0.0])
     S = np.array([[1.0, rho], [rho, 1.0]])
-    p, i = mvn.mvnun(lower, upper, mu, S)
+    p, i = mvnun(lower, upper, mu, S)
     return p
 
 
@@ -82,7 +82,7 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
 
 
 def _calc_mvnun(lower, upper, mu, S):
-    return mvn.mvnun(lower, upper, mu, S)[0]
+    return mvnun(lower, upper, mu, S)[0]
 
 
 def bivariate_normal_theory(
