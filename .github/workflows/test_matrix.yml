@@ -37,9 +37,9 @@ jobs:
     - name: Unit test
       run: |
         cd tests
-        pytest test_phik.py -v
+        pytest test_phik.py -v -W ignore::DeprecationWarning
 
     - name: Integration test
       run: |
         cd tests
-        pytest integration -v
+        pytest integration -v -W ignore::DeprecationWarning
