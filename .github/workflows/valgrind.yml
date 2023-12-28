@@ -58,4 +58,4 @@ jobs:
       - name: Test
         run: |
           cd tests
-          PYTHONMALLOC=malloc valgrind --leak-check=yes --track-origins=yes --log-file=valgrind-log.txt python -m pytest test_phik.py
+          PYTHONMALLOC=malloc valgrind --leak-check=yes --track-origins=yes --log-file=valgrind-log.txt python -m pytest test_phik.py -W ignore::DeprecationWarning
