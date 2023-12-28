@@ -26,7 +26,6 @@ dependencies = [
   "pandas>=0.25.1",
   "matplotlib>=2.2.3",
   "joblib>=0.14.1",
-  "setuptools>=68;python_version=='3.12'",
 ]
 
 [project.optional-dependencies]
