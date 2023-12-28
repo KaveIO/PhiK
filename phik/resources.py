@@ -15,17 +15,16 @@ LICENSE.
 """
 
 import pathlib
-from pkg_resources import resource_filename
-import phik
+from pathlib import Path
+
+ROOT_DIRECTORY = Path(__file__).resolve().parent
+
 
 # Fixtures
-_FIXTURE = {
-    _.name: _ for _ in pathlib.Path(resource_filename(phik.__name__, "data")).glob("*")
-}
+_FIXTURE = {_.name: _ for _ in pathlib.Path(ROOT_DIRECTORY / "data").glob("*")}
 # Tutorial notebooks
 _NOTEBOOK = {
-    _.name: _
-    for _ in pathlib.Path(resource_filename(phik.__name__, "notebooks")).glob("*.ipynb")
+    _.name: _ for _ in pathlib.Path(ROOT_DIRECTORY / "notebooks").glob("*.ipynb")
 }
 
 # Resource types
