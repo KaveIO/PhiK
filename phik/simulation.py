@@ -35,7 +35,7 @@ def sim_2d_data(hist:np.ndarray, ndata:int=0) -> np.ndarray:
     """
 
     if ndata <= 0:
-        ndata = int(np.round(hist.sum()))
+        ndata = int(np.rint(hist.sum()))
     if ndata <= 0:
         raise ValueError('ndata (or hist.sum()) has to be positive')
 
