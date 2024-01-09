@@ -12,14 +12,15 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted according to the terms listed in the file
 LICENSE.
 """
-from typing import List, Tuple, Union, Optional
+import sys
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
 from phik import definitions as defs
-from phik.utils import array_like_to_dataframe, guess_interval_cols
 from phik.data_quality import dq_check_nunique_values
+from phik.utils import array_like_to_dataframe, guess_interval_cols
 
 
 def bin_edges(
@@ -37,10 +38,12 @@ def bin_edges(
     if quantile:
         quantiles = np.linspace(0, 1, nbins + 1)
         xbins = np.quantile(arr[~np.isnan(arr)], quantiles)
-        xbins[0] -= 1e-14
+        xbins[0] -= max(1e-14 * abs(xbins[0]), sys.float_info.min)
     else:
+        min_value = np.min(arr[~np.isnan(arr)])
+        constant = max(1e-14 * abs(min_value), sys.float_info.min)
         xbins = np.linspace(
-            np.min(arr[~np.isnan(arr)]) - 1e-14, np.max(arr[~np.isnan(arr)]), nbins + 1
+            min_value - constant, np.max(arr[~np.isnan(arr)]), nbins + 1
         )
 
     return xbins
