@@ -10,7 +10,7 @@ Phi_K Correlation Constant
 
 Phi_K is a practical correlation constant that works consistently between categorical, ordinal and interval variables.
 It is based on several refinements to Pearson's hypothesis test of independence of two variables. Essentially, the
-contingency test statistic of two variables is interpreted as coming from a rotated bi-variate normal distribution,
+contingency test statistic of two variables is interpreted as if coming from a rotated bi-variate normal distribution,
 where the tilt is interpreted as Phi_K.
 
 The combined features of Phi_K form an advantage over existing coefficients. First, it works consistently between categorical, ordinal and interval variables.
