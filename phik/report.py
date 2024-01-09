@@ -12,22 +12,21 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted according to the terms listed in the file
 LICENSE.
 """
-from typing import Tuple, Union, Callable, Dict
-
-import os
 import itertools
-import numpy as np
-import pandas as pd
+import os
+from typing import Callable, Dict, Tuple, Union
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
+import numpy as np
+import pandas as pd
 from matplotlib import colors
+from matplotlib.backends.backend_pdf import PdfPages
 
 from .binning import bin_data
-from .phik import phik_from_rebinned_df, global_phik_from_rebinned_df
-from .significance import significance_from_rebinned_df
-from .outliers import outlier_significance_matrix_from_rebinned_df
 from .data_quality import dq_check_nunique_values
+from .outliers import outlier_significance_matrix_from_rebinned_df
+from .phik import global_phik_from_rebinned_df, phik_from_rebinned_df
+from .significance import significance_from_rebinned_df
 from .utils import guess_interval_cols
 
 
@@ -291,6 +290,10 @@ def correlation_report(
     significance_method: str = "asymptotic",
     CI_method: str = "poisson",
     verbose: bool = True,
+    plot_phik_matrix_kws: dict = {},
+    plot_global_phik_kws: dict = {},
+    plot_significance_matrix_kws: dict = {},
+    plot_outlier_significance_kws: dict = {},
 ) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, str]]:
     """
     Create a correlation report for the given dataset.
@@ -322,6 +325,14 @@ def correlation_report(
     :param CI_method: method for uncertainty calculation for outlier significance calculation. Options: [poisson, \
     exact_poisson]
     :param bool verbose: if False, do not print all interval columns that are guessed
+    :param dict plot_phik_matrix_kws: kwargs passed to plot_correlation_matrix() to plot the phik matrix. \
+    updates the default plotting values.
+    :param dict plot_global_phik_kws: kwargs passed to plot_correlation_matrix() to plot the global-phik vector. \
+    updates the default plotting values.
+    :param dict plot_significance_matrix_kws: kwargs passed to plot_correlation_matrix() to plot significance matrix. \
+    updates the default plotting values.
+    :param dict plot_outlier_significance_kws: kwargs passed to plot_correlation_matrix() to plot the outlier \
+    significances. updates the default plotting values.
     :returns: phik_matrix (pd.DataFrame), global_phik (np.array), significance_matrix (pd.DataFrame), \
     outliers_overview (dictionary), output_files (dictionary)
     """
@@ -352,8 +363,8 @@ def correlation_report(
         plot_file_name = folder + "phik_matrix.pdf"
         output_files["phik_matrix"] = plot_file_name
     phik_matrix = phik_from_rebinned_df(data_binned, noise_correction)
-    plot_correlation_matrix(
-        phik_matrix.values,
+
+    default_plot_phik_matrix = dict(
         x_labels=phik_matrix.columns,
         y_labels=phik_matrix.index,
         vmin=0,
@@ -364,6 +375,8 @@ def correlation_report(
         figsize=(7, 5.5),
         pdf_file_name=plot_file_name,
     )
+    default_plot_phik_matrix.update(plot_phik_matrix_kws)
+    plot_correlation_matrix(phik_matrix.values, **default_plot_phik_matrix)
     if pdf_file_name:
         plt.savefig(pdf_file, format="pdf", bbox_inches="tight", pad_inches=0)
         plt.show()
@@ -375,8 +388,8 @@ def correlation_report(
     global_phik, global_labels = global_phik_from_rebinned_df(
         data_binned, noise_correction
     )
-    plot_correlation_matrix(
-        global_phik,
+
+    default_plot_global_phik = dict(
         x_labels=[""],
         y_labels=global_labels,
         vmin=0,
@@ -387,6 +400,8 @@ def correlation_report(
         fontsize_factor=1.5,
         pdf_file_name=plot_file_name,
     )
+    default_plot_global_phik.update(plot_global_phik_kws)
+    plot_correlation_matrix(global_phik, **default_plot_global_phik)
     # plt.tight_layout()
     if pdf_file_name:
         plt.savefig(pdf_file, format="pdf", bbox_inches="tight", pad_inches=0)
@@ -403,8 +418,8 @@ def correlation_report(
         nsim_chi2,
         significance_method,
     )
-    plot_correlation_matrix(
-        significance_matrix.fillna(0).values,
+
+    default_plot_significance_matrix = dict(
         x_labels=significance_matrix.columns,
         y_labels=significance_matrix.index,
         vmin=-5,
@@ -414,6 +429,10 @@ def correlation_report(
         fontsize_factor=1.5,
         figsize=(7, 5.5),
         pdf_file_name=plot_file_name,
+    )
+    default_plot_significance_matrix.update(plot_significance_matrix_kws)
+    plot_correlation_matrix(
+        significance_matrix.fillna(0).values, **default_plot_significance_matrix
     )
     if pdf_file_name:
         plt.savefig(pdf_file, format="pdf", bbox_inches="tight", pad_inches=0)
@@ -444,8 +463,7 @@ def correlation_report(
                 plot_file_name = folder + "pulls_{0:s}.pdf".format(combi)
                 output_files[combi] = plot_file_name
 
-            plot_correlation_matrix(
-                zvalues_df.values,
+            default_plot_outlier_significance = dict(
                 x_labels=xlabels,
                 y_labels=ylabels,
                 x_label=xlabel,
@@ -456,6 +474,10 @@ def correlation_report(
                 identity_layout=False,
                 fontsize_factor=1.2,
                 pdf_file_name=plot_file_name,
+            )
+            default_plot_outlier_significance.update(plot_outlier_significance_kws)
+            plot_correlation_matrix(
+                zvalues_df.values, **default_plot_outlier_significance
             )
 
             outliers_overview[combi] = zvalues_df
