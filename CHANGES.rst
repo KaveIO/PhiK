@@ -2,11 +2,19 @@
 Release notes
 =============
 
-Version 0.12.4, Dec 2023
+Version 0.12.4, Jan 2024
 ------------------------
 
-- Drop support for Python 3.7, reached end of life.
-- Add support for Python 3.12
+- Add support for Python 3.12.
+- ENH: added plotting kwargs to correlation_report function.
+  https://github.com/KaveIO/PhiK/issues/58
+- FIX: fix of bin edge values they are rounded with 1e-14
+  https://github.com/KaveIO/PhiK/issues/60
+- FIX: numpy random multinomial requires integer number of samples (for nixOS)
+  https://github.com/KaveIO/PhiK/issues/73
+- FIX: pandas deprecation warning
+  https://github.com/KaveIO/PhiK/pull/74
+- Drop support for Python 3.7, has reached end of life.
 
 Version 0.12.3, Dec 2022
 ------------------------

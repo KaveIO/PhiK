@@ -1,8 +1,8 @@
-==================================
-Phi_K Correlation Analyzer Library
-==================================
+==========================
+Phi_K Correlation Constant
+==========================
 
-* Version: 0.12.4. Released: Dec 2023
+* Version: 0.12.4. Released: Jan 2024
 * Release notes: https://github.com/KaveIO/PhiK/blob/master/CHANGES.rst
 * Repository: https://github.com/kaveio/phik
 * Documentation: https://phik.readthedocs.io
