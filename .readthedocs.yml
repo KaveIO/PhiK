@@ -1,10 +1,19 @@
-# See: https://docs.readthedocs.io/en/latest/yaml-config.html
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 # .readthedocs.yml
 
+# Required
+version: 2
+
+# Set the version of Python
 build:
-  image: latest
+  os: ubuntu-22.04
+  tools:
+    python: "3.10"
 
 python:
-  version: 3.6
-  setup_py_install: true
-
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - doc
