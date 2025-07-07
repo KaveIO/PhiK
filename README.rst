@@ -2,7 +2,7 @@
 Phi_K Correlation Constant
 ==========================
 
-* Version: 0.12.4. Released: Jan 2024
+* Version: 0.12.5. Released: Jul 2025
 * Release notes: https://github.com/KaveIO/PhiK/blob/master/CHANGES.rst
 * Repository: https://github.com/kaveio/phik
 * Documentation: https://phik.readthedocs.io
