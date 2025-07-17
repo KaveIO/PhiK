@@ -17,11 +17,21 @@ LICENSE.
 import warnings
 
 import numpy as np
+import scipy
 from scipy import optimize
-from scipy.stats._mvn import mvnun
+
+_scipy_version = [int(v) for v in scipy.__version__.split('.')]
+USE_QMVN = True if _scipy_version[0] >= 1 and _scipy_version[1] >= 16 else False
+if USE_QMVN:
+    from scipy.stats._qmvnt import _qauto, _qmvn
+else:
+    from scipy.stats._mvn import mvnun
 
 
-def _mvn_un(rho: float, lower: tuple, upper: tuple) -> float:
+
+
+def _mvn_un(rho: float, lower: tuple, upper: tuple,
+            rng: np.random.Generator = np.random.default_rng(42)) -> float:
     """Perform integral of bivariate normal gauss with correlation
 
     Integral is performed using scipy's mvn library.
@@ -29,12 +39,20 @@ def _mvn_un(rho: float, lower: tuple, upper: tuple) -> float:
     :param float rho: tilt parameter
     :param tuple lower: tuple of lower corner of integral area
     :param tuple upper: tuple of upper corner of integral area
+    :param np.random.Generator rng: default_rng(42), optional
     :returns float: integral value
     """
     mu = np.array([0.0, 0.0])
     S = np.array([[1.0, rho], [rho, 1.0]])
-    p, i = mvnun(lower, upper, mu, S)
-    return p
+    return _calc_mvnun(lower=lower, upper=upper, mu=mu, S=S, rng=rng)
+
+
+def _calc_mvnun(lower, upper, mu, S, rng = np.random.default_rng(42)):
+    if USE_QMVN:
+        res = _qauto(_qmvn, S, lower, upper, rng)[0]
+    else:
+        res = mvnun(lower, upper, mu, S)[0]
+    return res
 
 
 def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
@@ -55,7 +73,7 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
     mu = np.array([0.0, 0.0])
     S = np.array([[1.0, rho], [rho, 1.0]])
 
-    # callling mvn.mvnun is expansive, so we only calculate half of the matrix, then symmetrize
+    # callling mvn.mvnun is expensive, so we only calculate half of the matrix, then symmetrize
     # add half block, which is symmetric in x
     odd_odd = False
     ranges = [
@@ -79,10 +97,6 @@ def _mvn_array(rho: float, sx: np.ndarray, sy: np.ndarray) -> list:
     # add second half, exclude center
     corr = np.concatenate([corr, corr if not odd_odd else corr[:-1]])
     return corr
-
-
-def _calc_mvnun(lower, upper, mu, S):
-    return mvnun(lower, upper, mu, S)[0]
 
 
 def bivariate_normal_theory(

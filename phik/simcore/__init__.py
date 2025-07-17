@@ -1,6 +1,10 @@
 import importlib.util
 
-_ext_spec = importlib.util.find_spec("phik.lib._phik_simulation_core")
+try:
+    _ext_spec = importlib.util.find_spec("phik.lib._phik_simulation_core")
+except ModuleNotFoundError:
+    _ext_spec = None
+
 if _ext_spec is not None:
     from phik.lib._phik_simulation_core import _sim_2d_data_patefield
 

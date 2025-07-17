@@ -20,7 +20,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from phik import resources, bivariate
-from phik.simulation import sim_2d_data_patefield
+from phik.simulation import sim_2d_data_patefield, CPP_SUPPORT
 from phik.binning import auto_bin_data, bin_data
 from phik.phik import phik_observed_vs_expected_from_rebinned_df, phik_from_hist2d
 from phik.statistics import get_dependent_frequency_estimates
@@ -51,7 +51,7 @@ class PhiKTest(unittest.TestCase):
         observed = df[cols].hist2d(interval_cols=interval_cols)
 
         phik_value = phik_from_hist2d(observed)
-        self.assertAlmostEqual(phik_value, 0.7685888294891855)
+        self.assertAlmostEqual(phik_value, 0.7685888294891855, places=3)
 
     def test_phik_observed_vs_expected_from_hist2d(self):
         """Test the calculation of Phi_K value from hist2d"""
@@ -67,7 +67,7 @@ class PhiKTest(unittest.TestCase):
         expected = get_dependent_frequency_estimates(observed)
 
         phik_value = phik_from_hist2d(observed=observed, expected=expected)
-        self.assertAlmostEqual(phik_value, 0.7685888294891855)
+        self.assertAlmostEqual(phik_value, 0.7685888294891855, places=3)
 
     def test_phik_matrix(self):
         """Test the calculation of Phi_K"""
@@ -79,29 +79,25 @@ class PhiKTest(unittest.TestCase):
         interval_cols = ["driver_age", "mileage"]
         phik_corr = df.phik_matrix(interval_cols=interval_cols)
 
-        self.assertTrue(
-            np.isclose(
-                phik_corr.values[cols.index("car_color"), cols.index("area")],
-                0.5904561614620166,
-            )
+        self.assertAlmostEqual(
+            phik_corr.values[cols.index("car_color"), cols.index("area")],
+            0.5904561614620166,
+            places=3,
         )
-        self.assertTrue(
-            np.isclose(
-                phik_corr.values[cols.index("area"), cols.index("car_color")],
-                0.5904561614620166,
-            )
+        self.assertAlmostEqual(
+            phik_corr.values[cols.index("area"), cols.index("car_color")],
+            0.5904561614620166,
+            places=3,
         )
-        self.assertTrue(
-            np.isclose(
-                phik_corr.values[cols.index("mileage"), cols.index("car_size")],
-                0.768588987856336,
-            )
+        self.assertAlmostEqual(
+            phik_corr.values[cols.index("mileage"), cols.index("car_size")],
+            0.768588987856336,
+            places=3,
         )
-        self.assertTrue(
-            np.isclose(
-                phik_corr.values[cols.index("car_size"), cols.index("mileage")],
-                0.768588987856336,
-            )
+        self.assertAlmostEqual(
+            phik_corr.values[cols.index("car_size"), cols.index("mileage")],
+            0.768588987856336,
+            places=3,
         )
 
     def test_phik_matrix_observed_vs_expected(self):
@@ -154,9 +150,9 @@ class PhiKTest(unittest.TestCase):
         car_size = (np.where(gk[1] == "car_size"))[0][0]
         mileage = (np.where(gk[1] == "mileage"))[0][0]
 
-        self.assertTrue(np.isclose(gk[0][area][0], 0.6057528003711345))
-        self.assertTrue(np.isclose(gk[0][car_size][0], 0.76858883))
-        self.assertTrue(np.isclose(gk[0][mileage][0], 0.768588987856336))
+        self.assertAlmostEqual(gk[0][area][0], 0.6057528003711345, places=3)
+        self.assertAlmostEqual(gk[0][car_size][0], 0.76858883, places=3)
+        self.assertAlmostEqual(gk[0][mileage][0], 0.768588987856336, places=3)
 
     def test_significance_matrix_asymptotic(self):
         """Test significance calculation"""
@@ -313,6 +309,7 @@ class PhiKTest(unittest.TestCase):
 
         self.assertTrue(isinstance(om, dict))
 
+    @pytest.mark.skipif(not CPP_SUPPORT, reason="cpp not supported")
     def test_simulation_2d_patefield(self):
         """Test simulation code using patefield algorithm."""
         og_state = np.random.get_state()

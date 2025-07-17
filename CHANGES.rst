@@ -2,6 +2,14 @@
 Release notes
 =============
 
+Version 0.12.5, Jul 2025
+------------------------
+
+- FIX: scipy 1.16.0 no longer supports mvn, code now migrated to qmvn.
+  https://github.com/KaveIO/PhiK/issues/101
+  https://github.com/KaveIO/PhiK/pull/102
+- Drop support for Python 3.8, has reached end of life.
+
 Version 0.12.4, Jan 2024
 ------------------------
 
