@@ -276,7 +276,10 @@ def phik_from_chi2(
     elif chi2 >= chi2_max:
         return 1.0
 
-    rho = optimize.brentq(
-        chi2_from_phik, 0, 1, args=(n, chi2, corr0, scale, sx, sy, pedestal), xtol=1e-5
-    )
+    try:
+        rho = optimize.brentq(
+            chi2_from_phik, 0, 1, args=(n, chi2, corr0, scale, sx, sy, pedestal), xtol=1e-5
+        )
+    except ValueError as e:
+            raise ValueError(f"{str(e)}. Your data might contain columns with perfect correlation")
     return rho
