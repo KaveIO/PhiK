@@ -310,7 +310,7 @@ def global_phik_from_rebinned_df(
     )
     V = phik_overview.values
     # check if V is ill-conditioned
-    if (np.linalg.det(V) > 0) and (np.linalg.cond(V) < 1/np.finfo(V.dtype).eps):
+    if (1. / np.linalg.cond(V) > np.finfo(V.dtype).eps):
         Vinv = inv(V)
     else:
         # use pseudo inverse to try handle finite but ill-conditioned arrays;
