@@ -33,6 +33,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        build: ['cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*']
+        include:
+          # Official Python distribution for Windows ARM64 starts from 3.11
+          - os: windows-11-arm
+            build: 'cp311-* cp312-* cp313-* cp314-*'
 
     steps:
     - uses: actions/checkout@v6
@@ -46,7 +51,7 @@ jobs:
     - uses: pypa/cibuildwheel@v3.3.1
       env:
         CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=10.13
-        CIBW_BUILD: 'cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*'
+        CIBW_BUILD: ${{ matrix.build }}
         CIBW_TEST_EXTRAS: test
         CIBW_TEST_COMMAND: pytest {project}/tests/test_phik.py -W ignore::DeprecationWarning
         CIBW_ARCHS: "auto64"

@@ -13,8 +13,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest, macos-latest, ubuntu-latest]
+        platform: [windows-latest, windows-11-arm, macos-latest, ubuntu-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+        exclude:
+          # No arm64 Python builds (or numpy/scipy/pandas wheels) for < 3.11 on Windows
+          - platform: windows-11-arm
+            python-version: "3.9"
+          - platform: windows-11-arm
+            python-version: "3.10"
 
     runs-on: ${{ matrix.platform }}
 
